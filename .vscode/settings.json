@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 33060,
+            "driver": "MySQL",
+            "name": "local-connection",
+            "database": "practica_cassandra_database",
+            "username": "root",
+            "password": "root",
+            "connectionTimeout": 3000
+        }
+    ]
+}
