@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   mysql:
-    image: mysql:8
+    image: mysql:8.3.0
     user: "${UID}:${GID}"
     command: --max-allowed-packet=500M
     ports:
