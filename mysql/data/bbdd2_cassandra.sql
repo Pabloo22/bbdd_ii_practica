@@ -1,5 +1,8 @@
 -- SQL!!
 
+SHOW VARIABLES LIKE 'secure_file_priv';
+
+
 --  para un país concreto se muestran para cada mazmorra del juego todos los jugadores, incluyendo sus tiempos
 SELECT email, country, idD, lowest_time, date, name, indx, userName
 FROM (

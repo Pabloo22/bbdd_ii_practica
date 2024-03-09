@@ -1,0 +1,16 @@
+version: '3.1'
+
+services:
+  mysql:
+    image: mysql:8
+    user: "${UID}:${GID}"
+    command: --max-allowed-packet=500M
+    ports:
+      - 33060:3306
+    expose:
+      - 33060
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./data:/var/lib/mysql
+      - ./export:/var/lib/mysql-files

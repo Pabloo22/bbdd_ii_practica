@@ -1,4 +1,4 @@
-sql/dumpVideogameMaster.sql
+mysql/data/dumpVideogameMaster.sql
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
