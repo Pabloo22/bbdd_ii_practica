@@ -1,3 +1,4 @@
+version: "3.1"
 networks:
   cassandra:
     driver: bridge
@@ -30,6 +31,7 @@ services:
         CASSANDRA_NUM_TOKENS: 128
         MAX_HEAP_SIZE: 512M
         HEAP_NEWSIZE: 256M
+
   node2:
     image: cassandra:5.0
     user: "${UID}:${GID}"
@@ -109,7 +111,7 @@ services:
       - 3306
     environment:
       MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dungeon
     volumes:
       - ./data:/var/lib/mysql
       - ./export:/var/lib/mysql-files
-
