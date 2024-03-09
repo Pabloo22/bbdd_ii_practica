@@ -1,6 +1,6 @@
 practica_cassandra/dumpVideogameMaster.sql
-/data/*
-!/data/.gitkeep
+mysql/data/*
+!mysql/data/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
