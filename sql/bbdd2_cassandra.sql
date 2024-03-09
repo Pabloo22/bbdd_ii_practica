@@ -46,7 +46,7 @@ COPY hall_of_fame (email, country, dungeon_id, lowest_time, date, dungeon_name, 
 CREATE TABLE player_statistics (
     email VARCHAR,
     dungeon_id INT,
-    lowest_time TINYINT,
+    lowest_time INT,
     date TIMESTAMP,
     PRIMARY KEY (email, dungeon_id, date)
 );
