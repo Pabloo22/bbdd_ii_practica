@@ -5,6 +5,7 @@ networks:
 services:
   node1:
     image: cassandra:5.0
+    user: "${UID}:${GID}"
     container_name: cassandra1
     hostname: h1
     restart: on-failure
@@ -31,6 +32,7 @@ services:
         HEAP_NEWSIZE: 256M
   node2:
     image: cassandra:5.0
+    user: "${UID}:${GID}"
     container_name: cassandra2
     hostname: h2
     restart: on-failure
@@ -53,6 +55,7 @@ services:
 
   node3:
     image: cassandra:5.0
+    user: "${UID}:${GID}"
     container_name: cassandra3
     hostname: h3
     restart: on-failure
@@ -75,6 +78,7 @@ services:
 
   node4:
     image: cassandra:5.0
+    user: "${UID}:${GID}"
     container_name: cassandra4
     hostname: h4
     restart: on-failure
