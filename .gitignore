@@ -1,4 +1,4 @@
-sql/dumpVideogameMaster.sql
+practica_cassandra/dumpVideogameMaster.sql
 mysql/data/*
 !mysql/data/.gitkeep
 
