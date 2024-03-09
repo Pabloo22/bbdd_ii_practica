@@ -29,7 +29,7 @@ CREATE TABLE player_statistics (
 );
 
 COPY player_statistics (email, dungeon_id, lowest_time, date) 
-FROM '/var/lib/cassandra/stats.csv' WITH HEADER = false;
+FROM '/var/lib/cassandra/Statistics.csv' WITH HEADER = false;
 
 CREATE TABLE hordas(
     country VARCHAR,
