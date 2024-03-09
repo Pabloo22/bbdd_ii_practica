@@ -18,7 +18,7 @@ CREATE TABLE hall_of_fame (
 );
 
 COPY hall_of_fame (email, country, dungeon_id, lowest_time, date, dungeon_name, username) 
-FROM '/var/lib/cassandra/HallofFame.csv' WITH HEADER = false;
+FROM '/csv/HallofFame.csv' WITH HEADER = false;
 
 CREATE TABLE player_statistics (
     dungeon_id TINYINT,
@@ -29,7 +29,7 @@ CREATE TABLE player_statistics (
 );
 
 COPY player_statistics (email, dungeon_id, lowest_time, date) 
-FROM '/var/lib/cassandra/Statistics.csv' WITH HEADER = false;
+FROM '/csv/Statistics.csv' WITH HEADER = false;
 
 CREATE TABLE hordas(
     country VARCHAR,
@@ -41,4 +41,4 @@ CREATE TABLE hordas(
 ) WITH CLUSTERING ORDER BY (n_kills DESC, email ASC);
 
 COPY hordas (country, event_id, username, email, n_kills) 
-FROM '/var/lib/cassandra/hordas.csv' WITH HEADER = false;
+FROM '/csv/Hordas.csv' WITH HEADER = false;
