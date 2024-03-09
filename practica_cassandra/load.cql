@@ -1,6 +1,6 @@
 -- `cqlsh --request-timeout=10000`
 
-CREATE KEYSPACE Dungeons WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}
+CREATE KEYSPACE Dungeons WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2};
 
 USE dungeons;
 
