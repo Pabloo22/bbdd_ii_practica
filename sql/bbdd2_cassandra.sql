@@ -1,4 +1,4 @@
-SQL!!
+-- SQL!!
 
 --  para un país concreto se muestran para cada mazmorra del juego todos los jugadores, incluyendo sus tiempos
 SELECT email, country, idD, lowest_time, date, name, indx, userName
@@ -24,7 +24,7 @@ INTO OUTFILE '/var/lib/mysql-files/Statistics.csv'
 FIELDS TERMINATED BY ',' ENCLOSED BY '"'
 LINES TERMINATED BY '\n';
 
-CASSANDRA!!
+-- CASSANDRA!!
 cqlsh --request-timeout=10000
 CREATE KEYSPACE Dungeons WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}
 USE dungeons;
