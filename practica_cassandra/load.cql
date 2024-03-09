@@ -21,12 +21,11 @@ COPY hall_of_fame (email, country, dungeon_id, lowest_time, date, dungeon_name, 
 FROM '/var/lib/cassandra/HallofFame.csv' WITH HEADER = false;
 
 CREATE TABLE player_statistics (
-    country VARCHAR,
     dungeon_id TINYINT,
     email VARCHAR,
     lowest_time TINYINT,
     date TIMESTAMP,
-    PRIMARY KEY (country, dungeon_id, lowest_time, email)
+    PRIMARY KEY (email, dungeon_id, lowest_time)
 );
 
 COPY player_statistics (email, dungeon_id, lowest_time, date) 
