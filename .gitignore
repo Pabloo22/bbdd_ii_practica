@@ -1,5 +1,6 @@
 sql/dumpVideogameMaster.sql
-mysql/data
+mysql/data/*
+!mysql/data/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
