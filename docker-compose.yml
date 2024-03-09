@@ -12,5 +12,5 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes:
-      - ./data:/var/lib/mysql
-      - ./export:/var/lib/mysql-files
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/export:/var/lib/mysql-files
