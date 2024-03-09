@@ -53,4 +53,18 @@ CREATE TABLE player_statistics (
 
 COPY player_statistics (email, dungeon_id, lowest_time, date) FROM '/var/lib/cassandra/Statistics.csv' WITH HEADER = false;
 
+CREATE TABLE hordas(
+    country VARCHAR,
+    event_id INT,
+    username VARCHAR,
+    email VARCHAR,
+    n_kills INT,
+    PRIMARY KEY ((country, event_id), n_kills, email)
+) WITH CLUSTERING ORDER BY (n_kills DESC, email ASC);
+
+COPY hordas (country, event_id, username, email, n_kills) FROM '/var/lib/cassandra/hordas.csv' WITH HEADER = false;
+
+
+
+
 
