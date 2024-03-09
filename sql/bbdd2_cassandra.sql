@@ -32,28 +32,25 @@ CONSISTENCY ALL;
 
 CREATE TABLE hall_of_fame (
     country VARCHAR,
-    dungeon_id TINYINT,
+    dungeon_id INT,
     dungeon_name VARCHAR,
     email VARCHAR,
     username VARCHAR,
-    lowest_time TINYINT,
+    lowest_time INT,
     date TIMESTAMP,
     PRIMARY KEY (country, dungeon_id, lowest_time, email)
 );
 
 COPY hall_of_fame (email, country, dungeon_id, lowest_time, date, dungeon_name, username) FROM '/var/lib/cassandra/HallofFame.csv' WITH HEADER = false;
 
+CREATE TABLE player_statistics (
+    email VARCHAR,
+    dungeon_id INT,
+    lowest_time TINYINT,
+    date TIMESTAMP,
+    PRIMARY KEY (email, dungeon_id, date)
+);
 
-SELECT
-  country,
-  dungeon_id,
-  COLLECT_LIST(lowest_time) AS lowest_times,
-  COLLECT_LIST(email) AS emails,
-  COLLECT_LIST(date) AS dates,
-  COLLECT_LIST(dungeon_name) AS dungeon_names,
-  COLLECT_LIST(username) AS usernames
-FROM
-  hall_of_fame
-GROUP BY
-  country, dungeon_id
-LIMIT 11;
+COPY player_statistics (email, dungeon_id, lowest_time, date) FROM '/var/lib/cassandra/Statistics.csv' WITH HEADER = false;
+
+
