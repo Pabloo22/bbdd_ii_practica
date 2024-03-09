@@ -40,7 +40,7 @@ LINES TERMINATED BY '\n';
 
 CASSANDRA!!
 cqlsh --request-timeout=10000
-CREATE KEYSPACE Dungeons WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}
+CREATE KEYSPACE Dungeons WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};
 USE dungeons;
 CONSISTENCY ALL;
 
