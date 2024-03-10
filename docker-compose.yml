@@ -6,7 +6,7 @@ networks:
 services:
   node1:
     image: cassandra:5.0
-    user: "${UID}:${GID}"
+    #user: "${UID}:${GID}"
     container_name: cassandra1
     hostname: h1
     restart: on-failure
@@ -34,7 +34,7 @@ services:
 
   node2:
     image: cassandra:5.0
-    user: "${UID}:${GID}"
+    #user: "${UID}:${GID}"
     container_name: cassandra2
     hostname: h2
     restart: on-failure
@@ -57,7 +57,7 @@ services:
 
   node3:
     image: cassandra:5.0
-    user: "${UID}:${GID}"
+    #user: "${UID}:${GID}"
     container_name: cassandra3
     hostname: h3
     restart: on-failure
@@ -80,7 +80,7 @@ services:
 
   node4:
     image: cassandra:5.0
-    user: "${UID}:${GID}"
+    #user: "${UID}:${GID}"
     container_name: cassandra4
     hostname: h4
     restart: on-failure
@@ -104,6 +104,7 @@ services:
   mysql:
     image: mysql:8
     user: "${UID}:${GID}"
+    container_name: mysql
     command: --max-allowed-packet=500M
     ports:
       - 3306:3306
