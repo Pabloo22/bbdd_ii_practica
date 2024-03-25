@@ -1,7 +1,14 @@
 --  para un país concreto se muestran para cada mazmorra del juego todos los jugadores, incluyendo sus tiempos
 SELECT email, country, idD, lowest_time, date, name, userName
 FROM (
-	SELECT w.email, country, d.idD, MIN(time) lowest_time, date, name, w.userName, ROW_NUMBER() OVER (PARTITION BY country, d.idD ORDER BY MIN(time), w.email) AS indx
+	SELECT w.email,
+		   country, 
+		   d.idD, 
+		   MIN(time) lowest_time, 
+		   date, 
+		   name, 
+		   w.userName, 
+		   ROW_NUMBER() OVER (PARTITION BY country, d.idD ORDER BY MIN(time), w.email) AS indx
 	FROM WebUser w
 	JOIN CompletedDungeons cd ON cd.email = w.email
 	JOIN Dungeon d ON cd.idD = d.idD
