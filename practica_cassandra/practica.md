@@ -14,9 +14,12 @@
 **Enunciado:**
 Se desea realizar un prototipo de una base de datos de Cassandra para dar servicio a los
 tres leaderboards anteriores. El juego hace tres peticiones de lectura al servidor que se
-resumen en la siguiente tabla. La fila “rank” indica el leaderbord que se puebla con la
-petición de lectura, la fila "in” indica los parámetros de entrada que recibe la llamada y
-“out” indica el formato de los datos que devuelve el servidor.
+resumen en la siguiente tabla:
+
+![tabla lecturas](tabla_lecturas.png)
+
+ La fila "rank" indica el leaderbord que se puebla con la
+petición de lectura, la fila "in" indica los parámetros de entrada que recibe la llamada y "out" indica el formato de los datos que devuelve el servidor.
 
 **Tarea:**
 1. Diseña una base de datos Cassandra para dar servicio a las lecturas y escrituras
@@ -40,7 +43,12 @@ proporcionar al servidor.
 Incluye el nivel de consistencia de cada consulta, teniendo en cuenta las
 características de los diferentes rankings.
 
-## SOLUCIÓN
+# SOLUCIÓN
+
+## 1. Creación de la base de datos
+
+## 2. Exportación de datos a csv
+
 ### Hall of fame
 Primero, **migramos** los datos de la base de datos de SQL. Para ello, nos quedamos con los 5 mejores jugadores de cada mazmorra por país. También, obtendremos el nombre de la mazmorra, el nombre de usuario, el tiempo que ha tardado en completarla y la fecha en lograrlo. Estos resultados los volcamos a un archivo csv.
 ```SQL
