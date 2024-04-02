@@ -6,3 +6,6 @@ cassandra_:
 
 neo4j_:
 	cd neo4j && docker compose up --build
+
+dump_dungeons:  # Copiar en terminal
+	cd neo4j && docker run -it --tty --rm --user=$(id -u):$(id -g) --volume=$PWD/data:/data --volume=$PWD/import:/backups neo4j/neo4j-admin:5.13.0 neo4j-admin database load dungeons --from-path=/backups
