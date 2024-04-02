@@ -12,6 +12,9 @@ tmp/cassandra4/*
 !tmp/cassandra3/.gitkeep
 !tmp/cassandra4/.gitkeep
 
+neo4j/data/*
+!neo4j/data/.gitkeep
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
