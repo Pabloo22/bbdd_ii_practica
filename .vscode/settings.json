@@ -7,10 +7,10 @@
             },
             "previewLimit": 50,
             "server": "localhost",
-            "port": 33060,
+            "port": 3306,
             "driver": "MySQL",
             "name": "local-connection",
-            "database": "practica_cassandra_database",
+            "database": "dungeon",
             "username": "root",
             "password": "root",
             "connectionTimeout": 3000
