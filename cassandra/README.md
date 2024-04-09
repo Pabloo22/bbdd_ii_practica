@@ -40,7 +40,7 @@ Una vez obtenemos el csv con los datos migrados, procedemos a montar la base de 
 ```sh
 cqlsh --request-timeout=10000
 ```
-Ahora, crearemos primero nuestro *Keyspace*. El nombre que le daremos será *Dungeon*. Al estar ubicado en un mismo *datacenter* utilizaremos `SimpleStrategy` con un facor de replicación de 2.
+Ahora, crearemos primero nuestro *Keyspace*. El nombre que le daremos será *Dungeons*. Al estar ubicado en un mismo *datacenter* utilizaremos `SimpleStrategy` con un facor de replicación de 2.
 
 ```sql
 CREATE KEYSPACE Dungeons
