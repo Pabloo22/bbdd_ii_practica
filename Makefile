@@ -1,5 +1,5 @@
-check_process_in_33060_port:
-	sudo lsof -i :33060
+check_process_in_3306_port:
+	sudo lsof -i :3306
 
 cassandra_:
 	cd cassandra && docker compose up --build
