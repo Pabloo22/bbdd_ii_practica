@@ -1,2 +1,1 @@
-pip install neo4j
-pip install yfiles_jupyter_graphs
+pip install neo4j yfiles_jupyter_graphs networkx ipywidgets pyvis matplotlib seaborn graphdatascience
