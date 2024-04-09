@@ -2,6 +2,7 @@ version: "3"
 services:
   neo4j:
     image: neo4j:5.13.0
+    container_name: neo4j
     volumes:
       - ./data:/data
       - ./plugins:/plugins
@@ -22,6 +23,7 @@ services:
     user: "${UID}:${GID}"
   notebook:
     image: jupyter/minimal-notebook
+    container_name: notebook
     user: root
     volumes:
       - ./sources:/home/${USER}/work
