@@ -20,6 +20,7 @@
 
 ### Hall of fame
 Primero, **migramos** los datos de la base de datos de SQL. Para ello, nos quedamos con los 5 mejores jugadores de cada mazmorra por país. También, obtendremos el nombre de la mazmorra, el nombre de usuario, el tiempo que ha tardado en completarla y la fecha en lograrlo. Estos resultados los volcamos a un archivo csv.
+
 ```SQL
 SELECT email, country, idD, lowest_time, date, name, userName
 FROM (
@@ -35,7 +36,7 @@ FROM (
             PARTITION BY country, d.idD 
             ORDER BY MIN(time), w.email
         ) AS indx
-    FROM WebUser w
+    FROM WebUser AS w
         JOIN CompletedDungeons AS cd 
             ON cd.email = w.email
         JOIN Dungeon AS d 
@@ -43,7 +44,7 @@ FROM (
     GROUP BY w.email, d.idD, country, date, name, w.userName
     ORDER BY country, d.idD, lowest_time, w.email
 ) AS t
-WHERE indx <= 5
+WHERE indx <= 5 
 INTO OUTFILE '/var/lib/mysql-files/HallofFame.csv'
 FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
 ```
