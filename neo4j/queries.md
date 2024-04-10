@@ -52,7 +52,7 @@ MATCH (a: Area),
       ()-[cb:IS_CONNECTED]->(b),
        p = shortestPath((a)-[:IS_CONNECTED*]->(b))
 WHERE a <> b AND ca.dungeon_name = cb.dungeon_name
-MERGE (a)-[r:CONNECTED_TO{weight: length(p)}]->(b);
+MERGE (a)-[r:SHORTEST_PATH{length: length(p)}]->(b);
 ```
 ### 7. Mostrar el mapa-mundi del juego, es decir, las áreas que contiene y como están conectadas.
 ```cypher
