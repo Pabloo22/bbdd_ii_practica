@@ -23,19 +23,31 @@ Primero, **migramos** los datos de la base de datos de SQL. Para ello, nos queda
 ```SQL
 SELECT email, country, idD, lowest_time, date, name, userName
 FROM (
-	SELECT w.email, country, d.idD, MIN(time) lowest_time, date, name, w.userName, ROW_NUMBER() OVER (PARTITION BY country, d.idD ORDER BY MIN(time), w.email) AS indx
-	FROM WebUser w
-	JOIN CompletedDungeons cd ON cd.email = w.email
-	JOIN Dungeon d ON cd.idD = d.idD
-	GROUP BY w.email, d.idD, country, date, name, w.userName
-	ORDER BY country, d.idD, lowest_time, w.email
+    SELECT
+        w.email,
+        country,
+        d.idD,
+        MIN(time) AS lowest_time,
+        date,
+        name, 
+        w.userName,
+        ROW_NUMBER() OVER (
+            PARTITION BY country, d.idD 
+            ORDER BY MIN(time), w.email
+        ) AS indx
+    FROM WebUser w
+        JOIN CompletedDungeons AS cd 
+            ON cd.email = w.email
+        JOIN Dungeon AS d 
+            ON cd.idD = d.idD
+    GROUP BY w.email, d.idD, country, date, name, w.userName
+    ORDER BY country, d.idD, lowest_time, w.email
 ) AS t
 WHERE indx <= 5
 INTO OUTFILE '/var/lib/mysql-files/HallofFame.csv'
-FIELDS TERMINATED BY ',' ENCLOSED BY '"'
-LINES TERMINATED BY '\n';
-
+FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
 ```
+
 Una vez obtenemos el csv con los datos migrados, procedemos a montar la base de datos de Cassandra. Comenzaremos ejecutando el comando para llamar a cqlsh y modificaremos el *timeout* para no tener poblemas tanto en importación como exportación de los datos.
 ```sh
 cqlsh --request-timeout=10000
