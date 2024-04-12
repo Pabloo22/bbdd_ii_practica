@@ -181,11 +181,15 @@ CREATE TABLE hall_of_fame (
 Con este diseño, todos los datos necesarios para la consulta anterior se pueden obtener mediante la siguiente consulta:
 
 ```sql
+CONSISTENCY TWO;
+
 SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
 FROM hall_of_fame
 WHERE country = <pais_deseado>
 PER PARTITION LIMIT 5;
 ```
+
+Utilizamos un nivel de consistencia de dos, puesto que "un pequeño retardo a la hora de mostrar los resultados no tiene impacto en el juego".
 
 #### Justificación
 
@@ -195,22 +199,82 @@ Por otro lado, la clave de clustering `lowest_time` se utiliza para ordenar los 
 
 De esta forma, podemos utilizar `PER PARTITION LIMIT 5` para asegurarse de que sólo se devuelvan los cinco mejores registros por cada mazmorra dentro de un país. Este límite es manejado eficientemente por Cassandra, que puede aprovechar el ordenamiento físico de los datos dentro de la partición por la clave de clustering para cortar la búsqueda tan pronto como se obtienen los cinco mejores registros.
 
-La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. Esto es especialmente importante, puesto que, la aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que debe seguir la aplicación a la hora de realizar escrituras:
+La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. Esto es especialmente importante, puesto que, la aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
 
-1. Comprobar si su tiempo está en el top 5 para la mazmorra y país correspondiente:
+1. Cada vez que un usuario completa una mazmorra, se comprueba si su tiempo está en el top 5 para la mazmorra y país correspondiente:
 
 ```sql
+CONSISTENCY ONE;
+
 SELECT dungeon_name, email, username, lowest_time, date
 FROM hall_of_fame
 WHERE country = <pais_deseado> AND dungeon_id = <dungeon_id>
 LIMIT 5;
 ```
 
-Esta query no requiere de un nivel de consistencia alto, puesto que 
+Esta query no requiere de un nivel de consistencia alto ya que se trata de una "mirada" rápida con la que se descartará a la mayoría de usuarios de ser inscritos en el ranking. Si el tiempo en la posición 5 del ranking es inferior al tiempo realizado por el usuario podemos estar seguros de que no será necesatio actualizar la tabla. Nótese que esto es cierto incluso aunque estemos leyendo una versión desactualizada de la misma. Esto se debe a que las subsecuentes actualizaciones únicamente moverán el tiempo mínimo para entrar al ranking hacia abajo. 
 
-Si el tiempo nuevo está en el top 5 (pocos casos):
+Esta consulta realmente no es estrictamente necesaria, sino que sirve como una pequeña optimización para evitar realizar dicha lectura con nivel de consistencia de `ALL`. Una vez pasado este primer *check*, procedemos a realizar la misma query con el nivel de consistencia de `ALL`:
 
-2. Comprobar si el usuario está en la tabla para esa mazmorra (consistencia ALL)
-3. Actualizar o añadir la entrada (consistencia ALL)
+```sql
+CONSISTENCY ALL;
 
+SELECT dungeon_name, email, username, lowest_time, date
+FROM hall_of_fame
+WHERE country = <pais_deseado> AND dungeon_id = <dungeon_id>
+LIMIT 5;
+```
 
+Solamente si el tiempo de completitud es inferior al del top 5 del ranking deberemos seguir con el proceso.
+
+2. El siguinte paso es comprobar si el usuario está en la tabla para esa mazmorra usando un nivel de consistencia `ALL`. De esta forma podemos recuperar el record de dicho usuario en caso de que tenga alguno. Es necesario usar este nivel consistencia puesto que si se diera el caso de que un usuario bate el record dos veces en un periodo de tiempo suficientemente corto como para que esta nueva información no se haya propogado al resto de nodos, podría ocurrir que se registrase más de una entrada para un mismo usuario, puetso que la aplicación entendería que dicho usuario debe ser añadido en lugar de actualizado. En este caso, el coste de realizar esta *query* es potencialmente más costoso. No obstante, suponiendo que el hecho de que un usuario consiga un tiempo inferior al top 5 del ranking no es algo muy común, creemos que es un coste perfectamente asumible y que compensa al evitar tener que realizar otro tipo de lógicas más complejas.
+
+```sql
+CONSISTENCY ALL;
+
+SELECT lowest_time
+FROM hall_of_fame
+WHERE country = <pais> 
+    AND dungeon_id = <dungeon_id> 
+    AND email = <email_del_usuario> 
+LIMIT 1;
+```
+
+3. Si se comprueba que el usuario ha batido un record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
+
+```sql
+CONSISTENCY ALL;
+
+DELETE FROM hall_of_fame
+WHERE country = <pais> 
+    AND dungeon_id = <dungeon_id> 
+    AND email = <email_del_usuario> 
+    AND lowest_time = <tiempo_anterior>;
+``` 
+
+Una vez eliminado, se añade el nuevo registro al ranking:
+
+```sql
+CONSISTENCY ALL;
+
+INSERT INTO hall_of_fame (country, dungeon_id, dungeon_name, email, username, lowest_time, date)
+VALUES (<pais>, <dungeon_id>, <nombre_dungeon>, <email_usuario>, <nombre_usuario>, <nuevo_tiempo>, now());
+```
+
+Alicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone el realizar estas comprobaciones es asumible en este ranking ya que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego.
+
+## Tarea 2: exportación de ficheros CSV desde SQL
+
+Crea las consultas .sql necesarias para exportar los datos de la base de datos relacional a ficheros .csv. Los ficheros deberán tener un formato acorde al diseño del punto 1
+
+## Tarea 3: creación del cluster
+
+Prepara un cluster local de 3 nodos todos en el mismo rack y datacenter.
+
+## Tarea 4: fichero `.cql` con la carga de los datos desde SQL
+
+Haz un fichero `.cql` que creen tu diseño en Cassandra y cargue los ficheros `.csv` creados en el paso 2. Se debe utilizar un factor de replicación de 2 y tener en cuenta que se las pruebas se ejecutaran en un cluster local.
+
+## Tarea 5: actualización de la tabla de escrituras
+
+## Tarea 6: fichero `.cql` con las consultas de escritura y lectura necesarias
