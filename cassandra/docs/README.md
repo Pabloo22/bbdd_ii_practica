@@ -167,11 +167,11 @@ La tabla que hemos diseñado que da solución a esta consulta es la siguiente:
 ```sql
 CREATE TABLE hall_of_fame (
     country VARCHAR,
-    dungeon_id INT,
+    dungeon_id SMALLINT,
     dungeon_name VARCHAR,
     email VARCHAR,
     username VARCHAR,
-    lowest_time TINYINT,
+    lowest_time SMALLINT,
     date TIMESTAMP,
     PRIMARY KEY ((country, dungeon_id), lowest_time, email)
     WITH CLUSTERING ORDER BY (lowest_time ASC);
@@ -262,6 +262,12 @@ VALUES (<pais>, <dungeon_id>, <nombre_dungeon>, <email_usuario>, <nombre_usuario
 ```
 
 Alicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone el realizar estas comprobaciones es asumible en este ranking ya que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego.
+
+Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `lowest_time`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
+
+### Estadísticas de usuario
+
+Esta tabla debe contener los tiempos que cada usuario ha tardado en completar una mazmorra en particular ordenados de menor a mayor.
 
 ## Tarea 2: exportación de ficheros CSV desde SQL
 
