@@ -78,29 +78,6 @@ services:
       node2:
         condition: service_healthy
 
-  node4:
-    image: cassandra:5.0
-    #user: "${UID}:${GID}"
-    container_name: cassandra4
-    hostname: h4
-    restart: on-failure
-    healthcheck:
-        test: ["CMD", "cqlsh", "-e", "describe keyspaces" ]
-        interval: 5s
-        timeout: 5s
-        retries: 60
-    networks:
-      - cassandra
-    ports:
-      - "9045:9042"
-    volumes:
-      - ./tmp/cassandra4:/var/lib/cassandra
-      - ./export:/csv
-    environment: *environment
-    depends_on:
-      node3:
-        condition: service_healthy
-
   mysql:
     image: mysql:8
     user: "${UID}:${GID}"
