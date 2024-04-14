@@ -38,3 +38,4 @@ services:
       - NB_USER=${USER}
       - NB_UID=${UID}
       - NB_GID=${GID}
+      - JUPYTER_TOKEN=neo4j
