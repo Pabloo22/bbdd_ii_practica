@@ -184,7 +184,9 @@ Con respecto a los tipos de datos utilizados en cada columna, las variables de t
 
 Esto es especialmente importante, puesto que, la aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
 
-1. Cada vez que un usuario completa una mazmorra, se comprueba si su tiempo está en el top 5 para la mazmorra y país correspondiente:
+#### Lógica de las escrituras
+
+Cada vez que un usuario completa una mazmorra, se comprueba si su tiempo está en el top 5 para la mazmorra y país correspondiente:
 
 ```sql
 CONSISTENCY ONE;
@@ -198,7 +200,7 @@ LIMIT 5;
 Como se ha mencionado anteriormente, podemos utilizar un nivel de consistencia de uno, ya que las escrituras se realizan con un nivel de consistencia de `ALL`.
 Solamente si el tiempo de completitud es inferior al del top 5 del ranking deberemos seguir con el proceso. 
 
-1. El siguiente paso es comprobar si el usuario está en la tabla para esa mazmorra. De esta forma podemos recuperar el record de dicho usuario en caso de que tenga alguno. Es necesario usar este nivel consistencia puesto que si se diera el caso de que un usuario bate el record dos veces en un periodo de tiempo suficientemente corto como para que esta nueva información no se haya propogado al resto de nodos, podría ocurrir que se registrase más de una entrada para un mismo usuario, puesto que la aplicación entendería que dicho usuario debe ser añadido en lugar de actualizado. En este caso, el coste de realizar esta *query* es potencialmente más costoso. No obstante, suponiendo que el hecho de que un usuario consiga un tiempo inferior al top 5 del ranking no es algo muy común, creemos que es un coste perfectamente asumible y que compensa al evitar tener que realizar otro tipo de lógicas más complejas. Para consultar cual fue su mejor tiempo en dicha mazmorra, podemos utilizar la siguiente consulta:
+El siguiente paso es comprobar si el usuario está en la tabla para esa mazmorra. De esta forma podemos recuperar el record de dicho usuario en caso de que tenga alguno. Para consultar cual fue su mejor tiempo en dicha mazmorra, podemos utilizar la siguiente consulta:
 
 ```sql
 CONSISTENCY ONE;
@@ -209,10 +211,9 @@ WHERE dungeon_id = <dungeon_id> AND email = <email_del_usuario>
 LIMIT 1;
 ```
 
-> [!NOTE]
-> La consulta anterior hace uso de la tabla `user_statistics`. Para más detalles sobre ella, ver la siguiente sección.
+La consulta anterior hace uso de la tabla `user_statistics`. Para más detalles sobre ella, ver la siguiente sección. No obstante, un detalle importante es que, de nuevo, podemos utilizar este nivel de consistencia ya que las escrituras en esta tabla también se realizan con un nivel de consistencia de `ALL`. Es necesario remarcar esto, porque es importante que las lecturas que realicemos en este proceso sean consistentes para evitar añadir a un mismo usuario más de una vez en el ranking.
 
-3. Si se comprueba que el usuario ha batido un record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
+Si se comprueba que el usuario ha batido un record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
 
 ```sql
 CONSISTENCY ALL;
@@ -248,7 +249,7 @@ VALUES (
 );
 ```
 
-Aplicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone el realizar estas comprobaciones es asumible en este ranking ya que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego.
+Aplicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone el realizar estas comprobaciones es asumible en este ranking ya que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego y a que el número de escrituras es presumiblemente bajo en este caso.
 
 ### Estadísticas de usuario
 
