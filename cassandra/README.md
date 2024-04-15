@@ -31,6 +31,7 @@ leaderboards del juego.
 En concreto, los jugadores pueden examinar tres *leaderboards* que se deben ir actualizando en tiempo real:
 
 ### Hall of Fame
+
 El “**hall of fame**” de cada país, es decir, para un país concreto se muestran
 para cada mazmorra del juego el TOP 5 de jugadores más rápidos de ese país, incluyendo sus tiempos.
 
@@ -38,6 +39,7 @@ para cada mazmorra del juego el TOP 5 de jugadores más rápidos de ese país, i
 > Un pequeño retardo a la hora de actualizar o mostrar estos leaderboards no tiene impacto en el juego.
 
 ### Estadísticas de un jugador
+
 Muestra los tiempos que ha tardado en
 completar una mazmorra en particular ordenados de menor a mayor.
 
@@ -45,6 +47,7 @@ completar una mazmorra en particular ordenados de menor a mayor.
 > Un pequeño retardo a la hora de actualizar o mostrar estos leaderboards no tiene impacto en el juego.
 
 ### Hordas
+
 El equipo de “game design” quiere introducir un leaderboard para las Hordas que muestre los N jugadores que más monstruos han matado hasta el momento durante una Horda en concreto.
 
 Una Horda es un evento especial del juego en la que los jugadores deben resistir en una fortaleza del mapa oleadas de monstruos que tratan de conquistar la fortaleza.
@@ -78,6 +81,7 @@ petición de escritura y la fila “data” indica los datos que se envían al s
 </div>
 
 ## Tareas
+
 1. Diseña una base de datos Cassandra para dar servicio a las lecturas y escrituras
 anteriores. Argumenta tus decisiones de diseño.
 
@@ -131,6 +135,7 @@ Utilizar una base de datos basada en Apache Cassandra soluciona los problemas me
 # Solución propuesta
 
 ## Tarea 1: Diseño base de datos Cassandra
+
 Por el diseño de la arquitectura de Cassandra, es necesario que todos los datos que necesitemos para cada consulta se encuentren almecenados en una única tabla. Puesto que se realiza un total de tres consultas, este es el número de tablas que se han creado. A continuación se argumentan las decisiones de diseño de cada una de las tablas que componen la base de datos.
 
 En concreto, se ha atendido a las siguientes cuestiones:
@@ -152,9 +157,8 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY ((country, dungeon_id), email, lowest_time)
-    WITH CLUSTERING ORDER BY (lowest_time ASC);
-);
+    PRIMARY KEY ((country, dungeon_id), lowest_time, email)
+) WITH CLUSTERING ORDER BY (lowest_time ASC);
 ```
 
 Con este diseño, todos los datos necesarios para la consulta anterior se pueden obtener mediante la siguiente consulta:
@@ -204,31 +208,17 @@ Solamente si el tiempo de completitud es inferior al del top 5 del ranking deber
 El siguiente paso es comprobar si el usuario está en la tabla para esa mazmorra. De esta forma podemos recuperar el record de dicho usuario en caso de que tenga alguno. Para consultar cual fue su mejor tiempo en dicha mazmorra, podemos utilizar la siguiente consulta:
 
 ```sql
-CONSISTENCY ONE;
+CONSISTENCY QUORUM;
 
-SELECT lowest_time
-FROM hall_of_fame
-WHERE country = <pais_deseado>
-    AND dungeon_id = <dungeon_id>
-    AND email = <email_usuario>
+SELECT time_minute AS lowest_time
+FROM player_statistics
+WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>
 LIMIT 1;
 ```
 
-> [!NOTE]
-> También podríamos utilizar la tabla `player_statistics` para obtener el tiempo más bajo de un usuario en una mazmorra:
->
-> ```sql
-> CONSISTENCY ONE;
->
-> SELECT time_minute AS lowest_time
-> FROM player_statistics
-> WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>
-> LIMIT 1;
-> ```
-> Ambas *queries* deberían tener un rendimiento similar.
+Para más información sobre la tabla `player_statistics`, ver la siguiente sección. Esta tabla utiliza un nivel de consistencia de `QUORUM` tanto para para las escrituras. Por tanto, utilizar `QUORUM` en esta consulta nos garantiza obtener un valor consistente. 
 
-
-Si se comprueba que el usuario ha batido un record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
+Si se comprueba que el usuario ha batido su record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
 
 ```sql
 CONSISTENCY ALL;
@@ -463,10 +453,11 @@ cqlsh --request-timeout=10000
 Ahora, crearemos primero nuestro *keyspace*. El nombre que le daremos será *Dungeons*. Al estar ubicado en un mismo *datacenter* utilizaremos `SimpleStrategy` con un factor de replicación de 2.
 
 ```sql
-CREATE KEYSPACE Dungeons
-WITH replication = {'class': 'SimpleStrategy',
-                    'replication_factor': 2};
-USE dungeons;
+CREATE KEYSPACE Dungeons 
+WITH replication = {
+    'class': 'SimpleStrategy', 
+    'replication_factor': 2
+};
 ```
 
 Debido a que la migración no supone un estancamiento en el funcionamiento del juego, vamos a establecer una consistencia de tipo `ALL` en la etapa de migración para asegurarnos que empezamos con todos los datos en los nodos que hemos definido.
@@ -484,3 +475,88 @@ Esta tarea ya ha sido respondida en la Tarea 1 en las secciones de justificació
 ## Tarea 6: fichero `.cql` con las consultas de escritura y lectura necesarias
 
 Las consultas de escritura y lectura necesarias se encuentran en el fichero `read_and_write.cql`.
+
+# Ejecución de la solución
+
+## Pre-requisitos
+
+Es necesario tener instalado Docker y Docker Compose en el sistema. Para instalar Docker, siga las instrucciones en la [documentación oficial](https://docs.docker.com/get-docker/). Para instalar Docker Compose, siga las instrucciones en la [documentación oficial](https://docs.docker.com/compose/install/).
+
+Para desplegar y ejecutar la solución, se deben seguir los siguientes pasos:
+
+## 1. Configuración del entorno
+
+### 1.1 Levantar el clúster de Cassandra y MySQL
+
+Desde la raíz del repositorio, ejecute el siguiente comando para levantar el clúster de Cassandra y MySQL:
+
+```sh
+cd cassandra && docker compose up --build
+```
+
+### 1.2 Verificar el estado del clúster
+
+Opcionalmente, podemos verificar el estado del clúster de Cassandra ejecutando utilizando `nodetool`. Para ello primero debemos acceder a alguno de los nodos de Cassandra:
+
+```sh
+docker exec -it cassandra1 bash
+```
+
+Una vez dentro:
+
+```sh
+nodetool status
+```
+
+El resultado debería ser similar al siguiente:
+
+```
+Datacenter: MilkyWay
+====================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address       Load        Tokens  Owns (effective)  Host ID                               Rack
+UN  192.168.64.2  269.51 KiB  128     49.8%             2a07638d-f85f-4bb5-b893-6ad37f6ed8aa  R1  
+UN  192.168.64.3  276.22 KiB  128     48.4%             488e455a-bda0-45ff-9425-a82b297c38a0  R1  
+UN  192.168.64.4  319.11 KiB  128     52.0%             04ac025d-5c43-4d57-9468-6fb8b8323774  R1  
+```
+
+## 2. Exportar datos de MySQL a CSV
+
+### 2.1. Conectarse a la base de datos MySQL
+
+Para ello, podemos utilizar MySQL Workbench o cualquier otro cliente de MySQL como SQLTools para acceder desde Visual Studio Code. Para este último caso, se ha proporcionado la configuración necesaria dentro del fichero `.vscode/settings.json`. La conexión se realiza con los siguientes datos:
+
+- Server: `localhost`
+- Port: `3309`
+- User: `root`
+- Password: `root`
+- Database: `dungeon`
+
+### 2.2. Realizar el dump de los datos
+
+Para ello, simplemente se debe de ejecutar el fichero `dumpVideogameMaster.sql` en el cliente de MySQL. Este fichero crea la base de datos SQL y las tablas necesarias para el juego así como inserta los datos necesarios para poder realizar las consultas de exportación a CSV.
+
+### 2.3. Exportar los datos a CSV
+
+Ejecutar las consultas SQL del fichero `export_queries.sql` en el cliente de MySQL.
+
+## 3. Cargar los datos en Cassandra
+
+### 3.1. Acceder a Cassandra
+
+Utilizando el primer nodo, accedemos a Cassandra. Si ya nos encontrábamos dentro del contenedor, podemos ejecutar simplemente:
+
+```sh
+cqlsh --request-timeout=10000
+```
+
+Si no, podemos acceder al contenedor con el siguiente comando:
+
+```sh
+docker exec -it cassandra1 cqlsh --request-timeout=10000
+```
+
+### 3.2. Crear el keyspace y las tablas
+
+Ejecutar el contenido del fichero `load.cql` en `cqlsh` para crear el keyspace y las tablas necesarias en Cassandra.

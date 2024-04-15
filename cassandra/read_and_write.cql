@@ -6,23 +6,21 @@
 -------------
 CONSISTENCY ONE;
 
-SELECT dungeon_name, email, username, lowest_time, date
+SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
 FROM hall_of_fame
-WHERE country = <pais_deseado> AND dungeon_id = <dungeon_id>
-LIMIT 5;
+WHERE country = 'de_DE'
+PER PARTITION LIMIT 5;
 
 -- WRITE
 -------------
 -- Paso 1: Usar la query anterior para comprobar si el tiempo 
 -- mejora el peor de los 5 tiempos.
 -- Paso 2: Comprobar si el tiempo del usuario es el más bajo suyo.
-CONSISTENCY ONE;
+CONSISTENCY QUORUM;
 
-SELECT lowest_time
-FROM hall_of_fame
-WHERE country = <pais_deseado>
-    AND dungeon_id = <dungeon_id>
-    AND email = <email_usuario>
+SELECT time_minute AS lowest_time
+FROM player_statistics
+WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>
 LIMIT 1;
 
 -- Nota: también podríamos utilizar la tabla player_statistics.

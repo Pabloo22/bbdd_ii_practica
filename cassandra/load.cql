@@ -3,7 +3,7 @@
 CREATE KEYSPACE Dungeons 
 WITH replication = {
     'class': 'SimpleStrategy', 
-    'replication_factor': 2,
+    'replication_factor': 2
 };
 
 USE dungeons;
@@ -18,9 +18,9 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY ((country, dungeon_id), email, lowest_time)
-    WITH CLUSTERING ORDER BY (lowest_time ASC);
-);
+    PRIMARY KEY ((country, dungeon_id), lowest_time, email)
+) WITH CLUSTERING ORDER BY (lowest_time ASC);
+
 
 COPY hall_of_fame (
     email,
@@ -38,8 +38,8 @@ CREATE TABLE player_statistics (
     email VARCHAR,
     time_minute SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY (email, dungeon_id, date, time_minute)
-) WITH CLUSTERING ORDER BY (time_minute ASC);
+    PRIMARY KEY (email, dungeon_id, time_minute, date)
+) WITH CLUSTERING ORDER BY (dungeon_id ASC, time_minute ASC);
 
 COPY player_statistics (email, dungeon_id, time_minute, date) 
 FROM '/csv/Statistics.csv' WITH HEADER = false;
