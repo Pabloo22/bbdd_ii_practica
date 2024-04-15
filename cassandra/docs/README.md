@@ -152,7 +152,7 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY ((country, dungeon_id), lowest_time, email)
+    PRIMARY KEY ((country, dungeon_id), email, lowest_time)
     WITH CLUSTERING ORDER BY (lowest_time ASC);
 );
 ```
@@ -197,7 +197,8 @@ WHERE country = <pais_deseado> AND dungeon_id = <dungeon_id>
 LIMIT 5;
 ```
 
-Como se ha mencionado anteriormente, podemos utilizar un nivel de consistencia de uno, ya que las escrituras se realizan con un nivel de consistencia de `ALL`.
+Como se ha mencionado anteriormente, podemos utilizar un nivel de consistencia de uno, ya que las escrituras se realizan con un nivel de consistencia de `ALL`. Es necesario remarcar esto, porque es importante que las lecturas que realicemos en este proceso sean consistentes para evitar añadir a un mismo usuario más de una vez en el ranking.
+
 Solamente si el tiempo de completitud es inferior al del top 5 del ranking deberemos seguir con el proceso. 
 
 El siguiente paso es comprobar si el usuario está en la tabla para esa mazmorra. De esta forma podemos recuperar el record de dicho usuario en caso de que tenga alguno. Para consultar cual fue su mejor tiempo en dicha mazmorra, podemos utilizar la siguiente consulta:
@@ -205,13 +206,27 @@ El siguiente paso es comprobar si el usuario está en la tabla para esa mazmorra
 ```sql
 CONSISTENCY ONE;
 
-SELECT time_minutes AS lowest_time
-FROM user_statistics
-WHERE dungeon_id = <dungeon_id> AND email = <email_del_usuario> 
+SELECT lowest_time
+FROM hall_of_fame
+WHERE country = <pais_deseado>
+    AND dungeon_id = <dungeon_id>
+    AND email = <email_usuario>
 LIMIT 1;
 ```
 
-La consulta anterior hace uso de la tabla `user_statistics`. Para más detalles sobre ella, ver la siguiente sección. No obstante, un detalle importante es que, de nuevo, podemos utilizar este nivel de consistencia ya que las escrituras en esta tabla también se realizan con un nivel de consistencia de `ALL`. Es necesario remarcar esto, porque es importante que las lecturas que realicemos en este proceso sean consistentes para evitar añadir a un mismo usuario más de una vez en el ranking.
+> [!NOTE]
+> También podríamos utilizar la tabla `player_statistics` para obtener el tiempo más bajo de un usuario en una mazmorra:
+>
+> ```sql
+> CONSISTENCY ONE;
+>
+> SELECT time_minute AS lowest_time
+> FROM player_statistics
+> WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>
+> LIMIT 1;
+> ```
+> Ambas *queries* deberían tener un rendimiento similar.
+
 
 Si se comprueba que el usuario ha batido un record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
 
@@ -231,32 +246,32 @@ Una vez eliminado, se añade el nuevo registro al ranking:
 CONSISTENCY ALL;
 
 INSERT INTO hall_of_fame (
-    country, 
-    dungeon_id, 
-    dungeon_name, 
-    email, username, 
-    lowest_time, 
+    country,
+    dungeon_id,
+    dungeon_name,
+    email, username,
+    lowest_time,
     date,
 )
 VALUES (
-    <pais>, 
-    <dungeon_id>, 
+    <pais>,
+    <dungeon_id>,
     <nombre_dungeon>,
-    <email_usuario>, 
-    <nombre_usuario>, 
-    <nuevo_tiempo>, 
+    <email_usuario>,
+    <nombre_usuario>,
+    <nuevo_tiempo>,
     now(),
 );
 ```
 
-Aplicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone el realizar estas comprobaciones es asumible en este ranking ya que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego y a que el número de escrituras es presumiblemente bajo en este caso.
+Aplicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone utilizar un nivel de consistencia `ALL` y es asumible en este ranking debido a que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego, y a que el número de escrituras es presumiblemente bajo en este caso.
 
 ### Estadísticas de usuario
 
 Esta tabla debe contener los tiempos que cada usuario ha tardado en completar una mazmorra en particular ordenados de menor a mayor. El diseño de tabla que cumpliría dicho propósito es el siguiente:
 
 ```sql
-CREATE TABLE user_statistics (
+CREATE TABLE player_statistics (
     dungeon_id SMALLINT,
     email VARCHAR,
     time_minute SMALLINT,
@@ -268,27 +283,27 @@ CREATE TABLE user_statistics (
 De esta forma, se pueden obtener los tiempos mediante la siguiente consulta:
 
 ```sql
-CONSISTENCY TWO;
+CONSISTENCY QUORUM;
 
 SELECT time_minute, date
-FROM user_statistics
+FROM player_statistics
 WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>;
 ```
 
-Utilizamos un nivel de consistencia de dos, por los mismos motivos expuestos anteriormente.
+Utilizamos un nivel de consistencia de `QUORUM` tanto para las lecturas como para las escrituras. Hemos utilizado este nivel de consistencia en ambos casos ya que, por un lado, es positivo asegurarnos de que los datos son consistentes y, por otro lado, esperamos un volumen de escrituras y lecturas balanceados en esta tabla. Es asumible el tiempo extra que supone utilizar este nivel de consistencia en este caso, ya que un pequeño retardo a la hora de actualizar las estadísticas de un usuario no tiene impacto en el juego.
 
 #### Justificación
 
-Como clave de partición hemos decidido usar únicamente `email`. Creemos que esto es preferible a usar `email` y `dungeon_id` puesto que esto podría resultar en particiones demasiado pequeñas al ser probable que haya un conjunto de usuarios con pocas partidas. Añadir `dungeon_id` dividiría aún más estas particiones lo que potencialmente nos llevaría a tener particiones demasiado granulares. Además, utilizando únicamente `email`, la consulta sigue siendo igualmente eficiente pese a que también filtremos por . Por otro lado, no utilizamos únicamente `dungeon_id` puesto que esto resultaría en particiones demasiado grandes.
+Como clave de partición hemos decidido usar únicamente `email`. Creemos que esto es preferible a usar `email` y `dungeon_id` puesto que esto podría resultar en particiones demasiado pequeñas al ser probable que haya un conjunto de usuarios con pocas partidas. Añadir `dungeon_id` dividiría aún más estas particiones lo que potencialmente nos llevaría a tener particiones demasiado granulares. Además, utilizando únicamente `email`, la consulta sigue siendo igualmente eficiente pese a que también filtremos por mazmorra. Por otro lado, no utilizamos únicamente `dungeon_id` puesto que esto podría resultar en particiones demasiado grandes.
 
-En cuanto a la clave de clustering, es necesario incluir todos los campos. Añadiendo `date` nos aseguramos de que cada registro es único y, por tanto, no se sobreescribirán. Añadir `time_minute` nos permite ordenar los registros por tiempo, lo cual es esencial para poder recuperarlos de manera ordenada.
+En cuanto a la clave de clustering, es necesario incluir todos los campos. Añadiendo `date` nos aseguramos de que cada registro es único y, por tanto, no se sobreescribirán. Añadir `time_minute` nos permite ordenar los registros por tiempo, lo cual es esencial para poder recuperarlos de manera ordenada de manera más eficiente.
 
-En este caso, las escrituras son mucho más sencillas. Simplemente, cada vez que un usuario completa una mazmorra se ejecuta la siguiente *query*:
+En este caso, las escrituras son mucho más sencillas. Simplemente, cada vez que un usuario completa una mazmorra se ejecuta el siguiente *insert*:
 
 ```sql
-CONSISTENCY ALL;
+CONSISTENCY QUORUM;
 
-INSERT INTO user_statistics (dungeon_id, email, time_minute, date)
+INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
 VALUES (<dungeon_id>, <email_usuario>, <tiempo>, now());
 ```
 
@@ -328,9 +343,9 @@ En este caso, utilizamos un nivel de consistencia de uno, ya que la consistencia
 
 #### Justificación
 
-La clave de partición se compone de `country` y `event_id`. Dividir únicamente por `country` podría resultar en particiones demasiado grandes. Al realizar las consultas por `country` y `event_id`, la anterior proposición nos obliga a que `event_id` este presente en la clave de partición. La cuestión ahora se encuentra en si añadir `country` también a esta clave. Hemos considerado que sería adecuado puesto que la cantidad de usuarios que potencialmente pueden participar en una horda de un mismo país es muy elevado, y, por tanto, las particiones resultantes podrían ser todavía demasiado grandes. 
+La clave de partición se compone de `country` y `event_id`. Dividir únicamente por `country` podría resultar en particiones demasiado grandes. Por el mismo motivo, hemos considerado que sería adecuado añadir `country` en lugar de utilizar únicamente `event_id`. 
 
-Con respecto a la clave de clustering, es necesario utilizar `email` para poder identificar a cada usuario de manera única. No obstante, también añadimos `username` ya que, al utilizar el tipo de datos `COUNTER` todas las columnas fuera de la clave primaria deben de utilizar este tipo de datos.
+Con respecto a la clave de clustering, es necesario utilizar `email` para poder identificar a cada usuario de manera única. No obstante, también añadimos `username` ya que, al utilizar el tipo de datos `COUNTER`, todas las columnas fuera de la clave primaria deben de utilizar este tipo de datos.
 
 No añadimos `n_kills` a la clave de clustering puesto que es un campo que será actualizado y no deseamos tener más de un registo por usuario.
 
@@ -348,10 +363,10 @@ Hemos utilizado un nivel de consistencia de `ONE` tal y como se recomienda en la
 
 Por otro lado, hemos utilizado `TTL` para que los registros se eliminen automáticamente después de 24 horas. Esto es útil para evitar que la tabla crezca indefinidamente. Asumimos que no es necesario acceder a estos datos una vez ha terminado el evento, pero esto es una cuestión que debería ser aclarada con el equipo pertinente. Si se desea almacenar los datos de manera permanente, simplemente se puede eliminar dicha cláusula.
 
-Para actualizar los datos de este ranking, se puede utilizar la siguiente *query*, cada vez que un usuario mata a un monstruo:
+Para actualizar los datos de este ranking, se puede utilizar el siguiente *update*, cada vez que un usuario mata a un monstruo:
 
 ```sql
-CONSISTENCY QUORUM;
+CONSISTENCY ONE;
 
 UPDATE hordas
 SET n_kills = n_kills + 1
@@ -360,7 +375,7 @@ WHERE country = <pais>
     AND email = <email_usuario>;
 ```
 
-En cuanto a los tipos de datos utilizados, cabe destacar el uso de `COUNTER` para `n_kills`. Este tipo de datos es el más adecuado para este ranking ya que se trata de un contador que se incrementa cada vez que un usuario mata a un monstruo. Utilizar este tipo de datos nos permite realizar operaciones de incremento de manera atómica y eficiente. De esta forma, evitamos tener que eliminar un registro y añadirlo de nuevo cada vez que un usuario mata a un monstruo, o tener que realizar agregaciones de tipo `COUNT` que podrían resultar en latencias innecesarias y que requerirían de un mayor número de escrituras.
+En cuanto a los tipos de datos utilizados, cabe destacar el uso de `COUNTER` para `n_kills`. Este tipo de datos es el más adecuado para este ranking ya que se trata de un contador que se incrementa cada vez que un usuario mata a un monstruo. De esta forma, evitamos tener que eliminar un registro y añadirlo de nuevo cada vez que un usuario mata a un monstruo, o tener que realizar agregaciones de tipo `COUNT` que podrían resultar en latencias innecesarias y que requerirían de un mayor número de escrituras y almacenamiento.
 
 Para el resto de campos, simplemente hemos utilizado `VARCHAR` para las variables de tipo texto e `INT` para `event_id`. Este último tipo de datos es el que mejor se ajusta a las necesidades de este ranking ya que es posible que haya un gran número de eventos en el futuro.
 
@@ -402,11 +417,11 @@ FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
 
 Esta consulta comienza seleccionando campos relevantes de las tablas `WebUser` y `CompletedDungeons`, junto con la tabla `Dungeon` para obtener detalles específicos de las mazmorras completadas. Agrupa los resultados por usuario, mazmorra y país, y calcula el menor tiempo de finalización para cada combinación de usuario y mazmorra. 
 
-Cabe destacar la utilización de la función de ventana `ROW_NUMBER()` para asignar un rango a cada registro dentro de cada país y mazmorra, basado en el tiempo de finalización más rápido, con un desempate por fecha en caso de tiempos idénticos. Finalmente, selecciona los cinco mejores registros de cada grupo para guardarlos en un archivo CSV, especificando los delimitadores de campos y líneas. El archivo resultante se guarda en la ruta especificada `/var/lib/mysql-files/HallofFame.csv`, con los campos encerrados en comillas.
+Cabe destacar la utilización de la función de ventana `ROW_NUMBER()` para asignar un rango a cada registro dentro de cada país y mazmorra, basado en el tiempo de finalización más rápido y con un desempate por fecha en caso de tiempos idénticos. Finalmente, selecciona los cinco mejores registros de cada grupo para guardarlos en un archivo CSV, especificando los delimitadores de campos y líneas. El archivo resultante se guarda en la ruta especificada `/var/lib/mysql-files/HallofFame.csv`, con los campos encerrados en comillas.
 
 ### Estadísticas de usuario
 
-Para este caso de uso, volvemos a migrar a un csv los datos de SQL. Esta vez, migramos solamente el email, el ID de la mazmorra, el tiempo que ha tardado en completarlo y la fecha de completación.
+Esta vez, migramos solamente el email, el ID de la mazmorra, el tiempo que ha tardado en completarlo y la fecha de completitud.
 
 ```sql
 SELECT email, idD, time AS time_minute, date
@@ -418,7 +433,7 @@ FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
 
 ### Hordas
 
-Finalmente, para el caso de las hordas, vamos a migrar la siguiente información al archivo `.csv`. Obtenemos la información del país del usuario, el ID del evento (horda), el nombre de usuario, su identificador y el contador de muertes logrado por el usuario.
+Obtenemos la información del país del usuario, el ID del evento (horda), el nombre de usuario, su identificador y el contador de muertes logrado por el usuario.
 
 ```sql
 SELECT w.country, Kills.idE, w.userName, w.email, COUNT(*) AS n_kills
@@ -433,24 +448,11 @@ FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
 
 ## Tarea 3: creación del cluster
 
-En este apartado se muestra el código necesario para la creación de un clúster local de 3 nodos todos en el mismo rack y datacenter. Comenzaremos ejecutando el comando para llamar a `cqlsh` y modificaremos el *timeout* para no tener poblemas tanto en importación como exportación de los datos.
-
-```sh
-cqlsh --request-timeout=10000
-```
-
-Ahora, crearemos primero nuestro *keyspace*. El nombre que le daremos será *Dungeons*. Al estar ubicado en un mismo *datacenter* utilizaremos `SimpleStrategy` con un factor de replicación de 2.
-
-```sql
-CREATE KEYSPACE Dungeons
-WITH replication = {'class': 'SimpleStrategy',
-                    'replication_factor': 2};
-USE dungeons;
-```
+Definimos un `docker-compose.yml` que contiene la configuración necesaria para levantar un clúster de 3 nodos de Cassandra. Este fichero define un entorno con varias instancias de Apache Cassandra y un contenedor MySQL para la gestión de bases de datos. Cada servicio está configurado para interactuar dentro de una red definida como `cassandra` con controlador de red tipo `bridge`, lo que facilita la comunicación entre los contenedores en la misma red virtual.
 
 ## Tarea 4: fichero `.cql` con la carga de los datos desde SQL
 
-En esta se un fichero `.cql` que creen tu diseño en Cassandra y cargue los ficheros `.csv` creados en el paso 2. Se debe utilizar un factor de replicación de 2 y tener en cuenta que se las pruebas se ejecutaran en un cluster local.
+El fichero `.cql` que crea el diseño en Cassandra y cargue los ficheros `.csv` creados en el paso 2 es `load.cql`. Se debe utiliza un factor de replicación de 2. Las pruebas se ejecutan en el clúster local definido en la tarea anterior.
 
 Comenzaremos ejecutando el comando para llamar a `cqlsh` y modificaremos el *timeout* para no tener poblemas tanto en importación como exportación de los datos.
 
@@ -473,8 +475,12 @@ Debido a que la migración no supone un estancamiento en el funcionamiento del j
 CONSISTENCY ALL;
 ```
 
+Una vez hemos creado el *keyspace* y hemos establecido la consistencia, procedemos a crear las tablas de la misma forma que las hemos definido en la Tarea 1.
+
 ## Tarea 5: actualización de la tabla de escrituras
 
 Esta tarea ya ha sido respondida en la Tarea 1 en las secciones de justificación de cada tabla.
 
 ## Tarea 6: fichero `.cql` con las consultas de escritura y lectura necesarias
+
+Las consultas de escritura y lectura necesarias se encuentran en el fichero `read_and_write.cql`.
