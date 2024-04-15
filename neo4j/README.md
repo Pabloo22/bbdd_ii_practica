@@ -1,4 +1,15 @@
-# Tareas
+<div align="center">
+
+--- 
+
+# Base de Datos II
+## Práctica de Cassandra
+### Pablo Ariño, Álvaro Laguna, Jorge de la Rosa
+### Ciencia de Datos e Inteligencia Artificial
+<img src=https://www.upm.es/sfs/Rectorado/Gabinete%20del%20Rector/Logos/UPM/Logotipo%20con%20Leyenda/LOGOTIPO%20leyenda%20color%20PNG.png width=25% height=25%>
+
+---
+</div>
 
 <p align="center">
   <img src="./schema.png" alt="Schema" width="500"/>
@@ -7,6 +18,8 @@
   Figura 1: Esquema de la base de datos
 </p>
 
+
+# Solución
 ## Desde la interfaz web
 ### 1. Buscar todas las salas de todas las mazmorras que contengan un tesoro en particular.
 ```cypher
@@ -82,3 +95,15 @@ Opccionalmente, se puede borrar el atributo componentId
 MATCH (r: Room)
 REMOVE r.componentId;
 ```
+
+## Desde Python
+
+Las queries se encuentran en el siguiente [notebook](./sources/queries.ipynb)
+
+## Visualización
+
+Las visualizaciones se encuentran en el siguiente [notebook](./sources/visualization.ipynb)
+
+## Filtro colaborativo
+
+El filtro colaborativo se encuentra en el siguiente [notebook](./sources/collaborative_filtering.ipynb)
