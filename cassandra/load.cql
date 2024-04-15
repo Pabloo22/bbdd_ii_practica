@@ -18,7 +18,7 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY ((country, dungeon_id), lowest_time, email)
+    PRIMARY KEY ((country, dungeon_id), email, lowest_time)
     WITH CLUSTERING ORDER BY (lowest_time ASC);
 );
 
