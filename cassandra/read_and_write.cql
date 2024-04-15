@@ -1,7 +1,9 @@
 
 -- HALL OF FAME
+---------------------------------
 
 -- READ
+-------------
 CONSISTENCY ONE;
 
 SELECT dungeon_name, email, username, lowest_time, date
@@ -10,20 +12,24 @@ WHERE country = <pais_deseado> AND dungeon_id = <dungeon_id>
 LIMIT 5;
 
 -- WRITE
+-------------
+-- Paso 1: Usar la query anterior para comprobar si el tiempo 
+-- mejora el peor de los 5 tiempos.
+-- Paso 2: Comprobar si el tiempo del usuario es el más bajo suyo.
+CONSISTENCY ONE;
 
--- Se comprueba si el usuario estaba ya en el top 5
--- y si ha hecho un tiempo mejor.
-
-CONSISTENCY ALL;
-
-SELECT time_minutes AS lowest_time
-FROM user_statistics
-WHERE dungeon_id = <dungeon_id> AND email = <email_del_usuario> 
+SELECT lowest_time
+FROM hall_of_fame
+WHERE country = <pais_deseado>
+    AND dungeon_id = <dungeon_id>
+    AND email = <email_usuario>
 LIMIT 1;
 
--- En caso de que la anterior consulta devuelva un resultado
--- y el tiempo sea menor, se elimina el registro anterior:
+-- Nota: también podríamos utilizar la tabla player_statistics.
 
+-- Si es necesario actualizar el Hall of Fame continuamos.
+
+-- Paso 3 (si el usuario ya estaba en el Hall of Fame):
 CONSISTENCY ALL;
 
 DELETE FROM hall_of_fame
@@ -32,24 +38,66 @@ WHERE country = <pais>
     AND email = <email_del_usuario> 
     AND lowest_time = <tiempo_anterior>;
 
--- Una vez eliminado el registro anterior, se inserta el nuevo
--- registro con el nuevo tiempo:
+-- Paso 4:
 CONSISTENCY ALL;
 
 INSERT INTO hall_of_fame (
-    country, 
-    dungeon_id, 
-    dungeon_name, 
-    email, username, 
-    lowest_time, 
-    date
+    country,
+    dungeon_id,
+    dungeon_name,
+    email, username,
+    lowest_time,
+    date,
 )
 VALUES (
-    <pais>, 
-    <dungeon_id>, 
+    <pais>,
+    <dungeon_id>,
     <nombre_dungeon>,
-    <email_usuario>, 
-    <nombre_usuario>, 
-    <nuevo_tiempo>, 
-    now()
+    <email_usuario>,
+    <nombre_usuario>,
+    <nuevo_tiempo>,
+    now(),
 );
+
+-- PLAYER STATISTICS
+---------------------------------
+
+-- READ
+CONSISTENCY QUORUM;
+
+SELECT time_minute, date
+FROM player_statistics
+WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>;
+
+-- WRITE
+CONSISTENCY QUORUM;
+
+INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
+VALUES (<dungeon_id>, <email_usuario>, <tiempo>, now());
+
+
+-- HORDE LEADERBOARD
+---------------------------------
+
+-- READ
+CONSISTENCY ONE;
+
+SELECT username, email, n_kills
+FROM hordas
+WHERE country = <pais> AND event_id = <id_evento>
+GROUP BY email
+ORDER BY n_kills DESC
+LIMIT <N>;
+
+-- WRITE
+CONSISTENCY ONE;
+
+INSERT INTO kills_hordas (country, event_id, username, kills_counter)
+VALUES (<pais>, <id_evento>, <nombre_usuario>, <número_de_muertes>)
+USING TTL 86400;
+
+UPDATE hordas
+SET n_kills = n_kills + 1
+WHERE country = <pais> 
+    AND event_id = <id_evento> 
+    AND email = <email_usuario>;
