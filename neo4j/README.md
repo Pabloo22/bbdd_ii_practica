@@ -69,7 +69,7 @@ MERGE (a)-[r:SHORTEST_PATH{length: length(p)}]->(b);
 ```
 ### 7. Mostrar el mapa-mundi del juego, es decir, las áreas que contiene y como están conectadas.
 ```cypher
-MATCH (a:Area)-[r:CONNECTED_TO]->(b:Area)
+MATCH (a:Area)-[r:SHORTEST_PATH]->(b:Area)
 RETURN a, r, b;
 ```
 ### 8. Crear un atributo nuevo en las habitaciones que contenga el nombre de la mazmorra a la que pertenecen.
