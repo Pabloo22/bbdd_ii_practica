@@ -486,7 +486,11 @@ Para desplegar y ejecutar la solución, se deben seguir los siguientes pasos:
 
 ## 1. Configuración del entorno
 
-### 1.1 Levantar el clúster de Cassandra y MySQL
+### 1.1 Configurar las variables de entorno
+
+Para configurar las variables de entorno necesarias, copie el archivo `.env.template` a un nuevo archivo llamado `.env` y modifique las variables según sea necesario.
+
+### 1.2 Levantar el clúster de Cassandra y MySQL
 
 Desde la raíz del repositorio, ejecute el siguiente comando para levantar el clúster de Cassandra y MySQL:
 
@@ -494,7 +498,18 @@ Desde la raíz del repositorio, ejecute el siguiente comando para levantar el cl
 cd cassandra && docker compose up --build
 ```
 
-### 1.2 Verificar el estado del clúster
+> [!NOTE]
+> Si se ejecuta más de una vez el comando anterior, es posible que se produzca el siguiente error:
+> 
+> ```
+> Error response from daemon: driver failed programming external connectivity on endpoint mysql 
+> (10a36f0c344bce01894e3272baaf180b6c7f25c2c5634ea2a141355575cca33e): 
+> Error starting userland proxy: listen tcp4 0.0.0.0:3306: bind: address already in use
+> ```
+>
+> Una posible solución es eliminar el proceso que está utilizando el puerto 3306. Para ello, ejecute el siguiente comando, para encontrar el proceso que está utilizando el puerto, utilizando `sudo lsof -i :3306`. Una vez obtenido el PID del proceso, ejecute `sudo kill <PID>` para eliminarlo.
+
+### 1.3 Verificar el estado del clúster
 
 Opcionalmente, podemos verificar el estado del clúster de Cassandra ejecutando utilizando `nodetool`. Para ello primero debemos acceder a alguno de los nodos de Cassandra:
 
