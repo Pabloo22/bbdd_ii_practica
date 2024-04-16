@@ -8,8 +8,7 @@ CONSISTENCY ONE;
 
 SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
 FROM hall_of_fame
-WHERE country = 'de_DE'
-PER PARTITION LIMIT 5;
+WHERE country = 'de_DE';
 
 -- WRITE
 -------------

@@ -132,9 +132,7 @@ Utilizar una base de datos basada en Apache Cassandra soluciona los problemas me
 
 - **Soporte para grandes volúmenes de escrituras:** las escrituras a disco se realizan en batches una vez la cantidad de memoria RAM utilizada ha sobrepasado cierta cantidad. De esta forma, se realiza una carga de los datos más eficiente al poder realizarse concurrentemente. Además, si varias operaciones de escritura se han recibido sobre un mismo registro únicamente este se actualiza con el que tenga el *timestamp* más reciente, reduciendo el número de datos a escribir en disco.
 
-# Solución propuesta
-
-## Tarea 1: Diseño base de datos Cassandra
+# Tarea 1: Diseño base de datos Cassandra
 
 Por el diseño de la arquitectura de Cassandra, es necesario que todos los datos que necesitemos para cada consulta se encuentren almecenados en una única tabla. Puesto que se realiza un total de tres consultas, este es el número de tablas que se han creado. A continuación se argumentan las decisiones de diseño de cada una de las tablas que componen la base de datos.
 
@@ -144,7 +142,7 @@ En concreto, se ha atendido a las siguientes cuestiones:
 
 2. Debemos **evitar la necesidad de realizar agregaciones** con datos que puedan estar alojados en múltiples nodos. El motivo es que esto aumentaría significativamente la latencia al requerir coordinación entre ellos para consolidar y calcular los resultados finales.
 
-### Hall of Fame
+## Hall of Fame
 
 Se pide el “hall of fame” de cada país, es decir, para un país concreto se muestran para cada mazmorra del juego el TOP 5 de jugadores más rápidos de ese país, incluyendo sus tiempos. La tabla que hemos diseñado y que da solución a esta consulta es la siguiente:
 
@@ -157,7 +155,7 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY ((country, dungeon_id), lowest_time, email)
+    PRIMARY KEY (country, dungeon_id, lowest_time, email)
 ) WITH CLUSTERING ORDER BY (lowest_time ASC);
 ```
 
@@ -169,24 +167,21 @@ CONSISTENCY ONE;
 SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
 FROM hall_of_fame
 WHERE country = <pais_deseado>
-PER PARTITION LIMIT 5;
 ```
 
 Podemos utilizar un nivel de consistencia de uno, ya que las escrituras se realizan con un nivel de consistencia de `ALL`, lo que garantiza que los datos se replican en todos los nodos y, por tanto, se encuentran disponibles en todo momento.
 
 #### Justificación
 
-La clave de partición se compone de `country` y `dungeon_id`. Esta elección se hace para garantizar que las consultas sean rápidas y no requieran buscar en múltiples particiones. De esta forma, nos aseguramos de que los datos para cada combinación de país y mazmorra estén localizados en el mismo nodo, reduciendo así la necesidad de realizar operaciones entre varios nodos.
+La clave de partición se compone únicamente de `country`. No añadimos `dungeon_id` a la clave de partición puesto que esto podría resultar en particiones demasiado pequeñas. Esto se debe a que solo añadimos un usuario a la tabla si su tiempo es uno de los cinco mejores. Además, aunque el número de usuarios por país sea desigual, el número de mazmorras, y el número de registros por mazmorra es relativamente constante, por lo que podemos esperar que la carga de trabajo esté equilibrada.
 
-Por otro lado, la clave de clustering `lowest_time` se utiliza para ordenar los resultados dentro de cada partición por el tiempo más bajo primero. Esto es crucial ya que permite una recuperación eficiente del top 5 de tiempos más bajos directamente de la base de datos, sin necesidad de procesamiento adicional o de ordenamiento en la aplicación cliente.
-
-De esta forma, podemos utilizar `PER PARTITION LIMIT 5` para asegurarnos de que solo se devuelvan los cinco mejores registros por cada mazmorra dentro de un país. Este límite es manejado eficientemente por Cassandra, que puede aprovechar el ordenamiento físico de los datos dentro de la partición por la clave de clustering para cortar la búsqueda tan pronto como se obtienen los cinco mejores registros.
+De esta forma, `dungeon_id` y `lowest_time` se utilizan para ordenar los resultados dentro de cada partición por el tiempo más bajo primero. Esto es crucial ya que permite una recuperación eficiente del top 5 de tiempos más bajos directamente de la base de datos, sin necesidad de procesamiento adicional o de ordenamiento en la aplicación cliente.
 
 La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. En caso contrario, sería imposible que en el ranking hubiera filas con un mismo `lowest_time`.
 
 Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `lowest_time`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
 
-Esto es especialmente importante, puesto que, la aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
+Algo a destacar, sin embargo, es que la lógica de escrituras debe de llevarse a cabo minuciosamente. La aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
 
 #### Lógica de las escrituras
 
