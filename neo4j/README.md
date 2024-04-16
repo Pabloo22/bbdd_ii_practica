@@ -17,7 +17,7 @@
 <p align="center">
   Figura 1: Esquema de la base de datos
 </p>
-
+# 
 
 # Solución
 ## Desde la interfaz web
