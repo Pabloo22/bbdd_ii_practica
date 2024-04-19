@@ -169,19 +169,33 @@ FROM hall_of_fame
 WHERE country = <pais_deseado>
 ```
 
-Podemos utilizar un nivel de consistencia de uno, ya que las escrituras se realizan con un nivel de consistencia de `ALL`, lo que garantiza que los datos se replican en todos los nodos y, por tanto, se encuentran disponibles en todo momento.
+Dependiendo de la lógica de escrituras que apliquemos, es posible que se requiera filtrar sus resultados para incluir únicamente el top 5. En concreto, dependerá de si garantizamos que siempre haya 5 entradas por país y mazmorra o no.
 
-#### Justificación
+Las escrituras, asumiendo que pueden existir usuarios repetidos, se realizarían de la siguiente forma:
 
-La clave de partición se compone únicamente de `country`. No añadimos `dungeon_id` a la clave de partición puesto que esto podría resultar en particiones demasiado pequeñas. Esto se debe a que solo añadimos un usuario a la tabla si su tiempo es uno de los cinco mejores. Además, aunque el número de usuarios por país sea desigual, el número de mazmorras, y el número de registros por mazmorra es relativamente constante, por lo que podemos esperar que la carga de trabajo esté equilibrada.
+```sql
+CONSISTENCY ???;
 
-De esta forma, `dungeon_id` y `lowest_time` se utilizan para ordenar los resultados dentro de cada partición por el tiempo más bajo primero. Esto es crucial ya que permite una recuperación eficiente del top 5 de tiempos más bajos directamente de la base de datos, sin necesidad de procesamiento adicional o de ordenamiento en la aplicación cliente.
+INSERT INTO hall_of_fame (
+    country,
+    dungeon_id,
+    dungeon_name,
+    email, username,
+    lowest_time,
+    date,
+)
+VALUES (
+    <pais>,
+    <dungeon_id>,
+    <nombre_dungeon>,
+    <email_usuario>,
+    <nombre_usuario>,
+    <nuevo_tiempo>,
+    now(),
+);
+```
 
-La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. En caso contrario, sería imposible que en el ranking hubiera filas con un mismo `lowest_time`.
-
-Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `lowest_time`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
-
-Algo a destacar, sin embargo, es que la lógica de escrituras debe de llevarse a cabo minuciosamente. La aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
+El nivel de consistencia, de nuevo, dependerá de la lógica de escrituras. No damos una decisión definitiva puesto que para saber con exactitud 
 
 #### Lógica de las escrituras
 
@@ -250,6 +264,18 @@ VALUES (
 ```
 
 Aplicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone utilizar un nivel de consistencia `ALL` y es asumible en este ranking debido a que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego, y a que el número de escrituras es presumiblemente bajo en este caso.
+
+#### Justificación
+
+La clave de partición se compone únicamente de `country`. No añadimos `dungeon_id` a la clave de partición puesto que esto podría resultar en particiones demasiado pequeñas. Esto se debe a que solo añadimos un usuario a la tabla si su tiempo es uno de los cinco mejores. Además, aunque el número de usuarios por país sea desigual, el número de mazmorras, y el número de registros por mazmorra es relativamente constante, por lo que podemos esperar que la carga de trabajo esté equilibrada.
+
+De esta forma, `dungeon_id` y `lowest_time` se utilizan para ordenar los resultados dentro de cada partición por el tiempo más bajo primero. Esto es crucial ya que permite una recuperación eficiente del top 5 de tiempos más bajos directamente de la base de datos, sin necesidad de procesamiento adicional o de ordenamiento en la aplicación cliente.
+
+La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. En caso contrario, sería imposible que en el ranking hubiera filas con un mismo `lowest_time`.
+
+Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `lowest_time`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
+
+Algo a destacar, sin embargo, es que la lógica de escrituras debe de llevarse a cabo minuciosamente. La aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
 
 ### Estadísticas de usuario
 
