@@ -1,8 +1,7 @@
 cassandra/dumpVideogameMaster.sql
 cassandra/data/*
 !cassandra/data/.gitkeep
-cassandra/export/*
-!cassandra/export/.gitkeep
+cassandra/export/*.csv
 cassandra/tmp/cassandra1/*
 cassandra/tmp/cassandra2/*
 cassandra/tmp/cassandra3/*

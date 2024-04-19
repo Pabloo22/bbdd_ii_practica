@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "cassandra"
+version = "0.1.0"
+description = ""
+authors = ["Pabloo22 <pablete.arino@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+cassandra-driver = "^3.29.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

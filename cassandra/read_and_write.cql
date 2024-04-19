@@ -12,7 +12,7 @@ WHERE country = 'de_DE';
 
 -- WRITE
 -------------
--- Paso 1: Usar la query anterior para comprobar si el tiempo 
+-- Paso 1: Usar la query anterior con consistency QUORUM para comprobar si el tiempo 
 -- mejora el peor de los 5 tiempos.
 -- Paso 2: Comprobar si el tiempo del usuario es el más bajo suyo.
 CONSISTENCY QUORUM;
