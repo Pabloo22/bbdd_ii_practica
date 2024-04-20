@@ -235,8 +235,8 @@ CREATE TABLE player_statistics (
     email VARCHAR,
     time_minute SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY (email, dungeon_id, date, time_minute)
-) WITH CLUSTERING ORDER BY (time_minute ASC);
+    PRIMARY KEY (email, dungeon_id, time_minute, date)
+) WITH CLUSTERING ORDER BY (dungeon_id ASC, time_minute ASC);
 ```
 
 De esta forma, se pueden obtener los tiempos mediante la siguiente consulta:
