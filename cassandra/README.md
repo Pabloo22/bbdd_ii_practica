@@ -291,6 +291,8 @@ CREATE TABLE hordas(
 );
 ```
 
+#### Lecturas
+
 Para obtener los resultados de este ranking, se puede utilizar la siguiente consulta:
 
 ```sql
@@ -306,29 +308,27 @@ LIMIT <N>;
 
 En este caso, utilizamos un nivel de consistencia de uno, ya que la consistencia en este leaderboard no es tan importante y, en cambio, el rendimiento es crítico.
 
-#### Justificación
+#### Escrituras
 
-La clave de partición se compone de `country` y `event_id`. Dividir únicamente por `country` podría resultar en particiones demasiado grandes. Por el mismo motivo, hemos considerado que sería adecuado añadir `country` en lugar de utilizar únicamente `event_id`. 
-
-Con respecto a la clave de clustering, es necesario utilizar `email` para poder identificar a cada usuario de manera única. No obstante, también añadimos `username` ya que, al utilizar el tipo de datos `COUNTER`, todas las columnas fuera de la clave primaria deben de utilizar este tipo de datos.
-
-No añadimos `n_kills` a la clave de clustering puesto que es un campo que será actualizado y no deseamos tener más de un registo por usuario.
-
-Para insertar datos en esta tabla, se puede utilizar la siguiente *query*:
+Para insertar datos en esta tabla, hemos utilizado el script [load_horde_data.py](load_horde_data.py). Este fichero primero carga los usuarios que han participado en cada horda con el número de *kills*  a cero.
 
 ```sql
-CONSISTENCY ONE;
+INSERT INTO hordas (country, event_id, email, username)
+VALUES (?, ?, ?, ?)
+```
 
-INSERT INTO kills_hordas (country, event_id, username, kills_counter)
-VALUES (<pais>, <id_evento>, <nombre_usuario>, <número_de_muertes>)
-USING TTL 86400;
+Después, se actualiza este valor:
+
+```sql
+UPDATE hordas SET n_kills = n_kills + ?
+WHERE country = ? AND event_id = ? AND email = ? AND username = ?
 ```
 
 Hemos utilizado un nivel de consistencia de `ONE` tal y como se recomienda en la [documentación](https://docs.datastax.com/en/archived/cql/3.0/cql/ddl/ddl_counters_c.html) de Cassandra cuando se utilizan contadores. Cassandra garantiza que los contadores se incrementen de manera consistente incluso si se producen escrituras concurrentes.
 
-Por otro lado, hemos utilizado `TTL` para que los registros se eliminen automáticamente después de 24 horas. Esto es útil para evitar que la tabla crezca indefinidamente. Asumimos que no es necesario acceder a estos datos una vez ha terminado el evento, pero esto es una cuestión que debería ser aclarada con el equipo pertinente. Si se desea almacenar los datos de manera permanente, simplemente se puede eliminar dicha cláusula.
+Una observación es que se podría utilizar `TTL` para que los registros se eliminen automáticamente después de 24 horas. Esto es útil para evitar que la tabla crezca indefinidamente, en caso de que no sea necesario acceder a estos datos una vez ha terminado el evento.
 
-Para actualizar los datos de este ranking, se puede utilizar el siguiente *update*, cada vez que un usuario mata a un monstruo:
+Para actualizar los datos de este ranking durante el evento, se puede utilizar el siguiente *update*, cada vez que un usuario mata a un monstruo:
 
 ```sql
 CONSISTENCY ONE;
@@ -340,7 +340,15 @@ WHERE country = <pais>
     AND email = <email_usuario>;
 ```
 
-En cuanto a los tipos de datos utilizados, cabe destacar el uso de `COUNTER` para `n_kills`. Este tipo de datos es el más adecuado para este ranking ya que se trata de un contador que se incrementa cada vez que un usuario mata a un monstruo. De esta forma, evitamos tener que eliminar un registro y añadirlo de nuevo cada vez que un usuario mata a un monstruo, o tener que realizar agregaciones de tipo `COUNT` que podrían resultar en latencias innecesarias y que requerirían de un mayor número de escrituras y almacenamiento.
+#### Justificaciones adicionales
+
+La clave de partición se compone de `country` y `event_id`. Dividir únicamente por `country` podría resultar en particiones demasiado grandes y desequilibradas como ya se explicó en la tabla *Hall of Fame*. Por el mismo motivo, hemos considerado que sería adecuado añadir `country` en lugar de utilizar únicamente `event_id`. 
+
+Con respecto a la clave de clustering, es necesario utilizar `email` para poder identificar a cada usuario de manera única. No obstante, también añadimos `username` ya que, al utilizar el tipo de datos `COUNTER`, todas las columnas fuera de la clave primaria deben de utilizar este tipo de datos.
+
+No añadimos `n_kills` a la clave de clustering puesto que es un campo que será actualizado y no deseamos tener más de un registo por usuario.
+
+En cuanto a los tipos de datos utilizados, cabe destacar el uso de `COUNTER` para `n_kills`. Este tipo de datos es el más adecuado para este ranking ya que se trata de un contador que se incrementa cada vez que un usuario mata a un monstruo. De esta forma, evitamos tener que eliminar un registro y añadirlo de nuevo cada vez que un usuario mata a un monstruo (y utilizando lecturas consistentes), o tener que realizar agregaciones de tipo `COUNT` que podrían resultar en latencias innecesarias y que requerirían de un mayor número de escrituras y almacenamiento.
 
 Para el resto de campos, simplemente hemos utilizado `VARCHAR` para las variables de tipo texto e `INT` para `event_id`. Este último tipo de datos es el que mejor se ajusta a las necesidades de este ranking ya que es posible que haya un gran número de eventos en el futuro.
 
