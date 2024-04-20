@@ -162,7 +162,7 @@ CREATE TABLE hall_of_fame (
 AND gc_grace_seconds = ?;  -- Probablemente requiera una modificación
 ```
 
-#### Lecturas:
+#### Lecturas
 
 Con este diseño, todos los datos necesarios para la consulta anterior se pueden obtener mediante la siguiente consulta:
 
@@ -239,40 +239,46 @@ CREATE TABLE player_statistics (
 ) WITH CLUSTERING ORDER BY (dungeon_id ASC, time_minute ASC);
 ```
 
+#### Lecturas
+
 De esta forma, se pueden obtener los tiempos mediante la siguiente consulta:
 
 ```sql
-CONSISTENCY QUORUM;
+CONSISTENCY ONE;
 
 SELECT time_minute, date
 FROM player_statistics
 WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>;
 ```
 
-Utilizamos un nivel de consistencia de `QUORUM` tanto para las lecturas como para las escrituras. Hemos utilizado este nivel de consistencia en ambos casos ya que, por un lado, es positivo asegurarnos de que los datos son consistentes y, por otro lado, esperamos un volumen de escrituras y lecturas balanceados en esta tabla. Es asumible el tiempo extra que supone utilizar este nivel de consistencia en este caso, ya que un pequeño retardo a la hora de actualizar las estadísticas de un usuario no tiene impacto en el juego.
+Podemos utilizar un nivel de consistencia de uno tanto en escritura como en lectura puesto que no son necesarias lecturas ni escrituras consistentes.
 
-#### Justificación
+Otra opción es utilizar un nivel de consistencia de `QUORUM` tanto para las lecturas como para las escrituras. De esta forma nos asegurararíamos de de que los datos son consistentes. Podría ser asumible el tiempo extra que supone utilizar este nivel de consistencia en este caso, ya que un pequeño retardo a la hora de actualizar las estadísticas de un usuario no tiene impacto en el juego. Si la consulta falla, se podría reintentar con un nivel de consistencia más bajo.
 
-Como clave de partición hemos decidido usar únicamente `email`. Creemos que esto es preferible a usar `email` y `dungeon_id` puesto que esto podría resultar en particiones demasiado pequeñas al ser probable que haya un conjunto de usuarios con pocas partidas. Añadir `dungeon_id` dividiría aún más estas particiones lo que potencialmente nos llevaría a tener particiones demasiado granulares. Además, utilizando únicamente `email`, la consulta sigue siendo igualmente eficiente pese a que también filtremos por mazmorra. Por otro lado, no utilizamos únicamente `dungeon_id` puesto que esto podría resultar en particiones demasiado grandes.
+#### Escrituras
 
-En cuanto a la clave de clustering, es necesario incluir todos los campos. Añadiendo `date` nos aseguramos de que cada registro es único y, por tanto, no se sobreescribirán. Añadir `time_minute` nos permite ordenar los registros por tiempo, lo cual es esencial para poder recuperarlos de manera ordenada de manera más eficiente.
-
-En este caso, las escrituras son mucho más sencillas. Simplemente, cada vez que un usuario completa una mazmorra se ejecuta el siguiente *insert*:
+En cuanto a las escrituras, cada vez que un usuario completa una mazmorra se ejecuta el siguiente *insert*:
 
 ```sql
-CONSISTENCY QUORUM;
+CONSISTENCY ONE;
 
 INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
 VALUES (<dungeon_id>, <email_usuario>, <tiempo>, now());
 ```
 
-Con el nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone el realizar estas comprobaciones es asumible en este ranking ya que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego.
+#### Otras justificaciones
+
+Como clave de partición hemos decidido usar únicamente `email`. Creemos que esto es preferible a usar `email` y `dungeon_id` puesto que esto podría resultar en particiones demasiado pequeñas al ser probable que haya un conjunto de usuarios con pocas partidas. Añadir `dungeon_id` dividiría aún más estas particiones lo que potencialmente nos llevaría a tener particiones demasiado granulares. Además, utilizando únicamente `email`, la consulta sigue siendo igualmente eficiente pese a que también filtremos por mazmorra. Por otro lado, no utilizamos únicamente `dungeon_id` puesto que esto podría resultar en particiones demasiado grandes.
+
+En cuanto a la clave de clustering, es necesario incluir todos los campos. Añadiendo `date` nos aseguramos de que cada registro es único y, por tanto, no se sobreescribirán. Añadir `time_minute` nos permite ordenar los registros por tiempo, lo cual es esencial para poder recuperarlos de manera ordenada de manera más eficiente.
 
 Las decisiones de los tipos de datos son las mismas que en *Hall of Fame*.
 
 ### Hordas
 
-Este *leaderboard* muestra los N jugadores que más monstruos han matado hasta el momento durante una Horda en concreto. La tabla que hemos diseñado y que da solución a esta consulta es la siguiente:
+Este *leaderboard* muestra los N jugadores que más monstruos han matado hasta el momento durante una Horda en concreto.
+
+La tabla que hemos diseñado y que da solución a esta consulta es la siguiente:
 
 ```sql
 CREATE TABLE hordas(
