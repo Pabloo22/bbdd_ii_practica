@@ -155,9 +155,14 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY (country, dungeon_id, lowest_time, email)
-) WITH CLUSTERING ORDER BY (lowest_time ASC);
+    -- Dependiendo de la estrategia de escritura, la clave primaria 
+    -- podría utilizar también `dungeon_id` como clave de partición.
+    PRIMARY KEY (country, dungeon_id, lowest_time, email)  
+) WITH CLUSTERING ORDER BY (lowest_time ASC)
+AND gc_grace_seconds = ?;  -- Probablemente requiera una modificación
 ```
+
+#### Lecturas:
 
 Con este diseño, todos los datos necesarios para la consulta anterior se pueden obtener mediante la siguiente consulta:
 
@@ -169,81 +174,16 @@ FROM hall_of_fame
 WHERE country = <pais_deseado>
 ```
 
-Dependiendo de la lógica de escrituras que apliquemos, es posible que se requiera filtrar sus resultados para incluir únicamente el top 5. En concreto, dependerá de si garantizamos que siempre haya 5 entradas por país y mazmorra o no.
+> [!NOTE] 
+> Esta consulta necesita filtrar sus resultados para incluir únicamente el top cinco una vez ejecutada.
+
+#### Escrituras
 
 Las escrituras, asumiendo que pueden existir usuarios repetidos, se realizarían de la siguiente forma:
 
 ```sql
-CONSISTENCY ???;
-
-INSERT INTO hall_of_fame (
-    country,
-    dungeon_id,
-    dungeon_name,
-    email, username,
-    lowest_time,
-    date,
-)
-VALUES (
-    <pais>,
-    <dungeon_id>,
-    <nombre_dungeon>,
-    <email_usuario>,
-    <nombre_usuario>,
-    <nuevo_tiempo>,
-    now(),
-);
-```
-
-El nivel de consistencia, de nuevo, dependerá de la lógica de escrituras. No damos una decisión definitiva puesto que para saber con exactitud 
-
-#### Lógica de las escrituras
-
-Cada vez que un usuario completa una mazmorra, se comprueba si su tiempo está en el top 5 para la mazmorra y país correspondiente:
-
-```sql
 CONSISTENCY ONE;
 
-SELECT dungeon_name, email, username, lowest_time, date
-FROM hall_of_fame
-WHERE country = <pais_deseado> AND dungeon_id = <dungeon_id>
-LIMIT 5;
-```
-
-Como se ha mencionado anteriormente, podemos utilizar un nivel de consistencia de uno, ya que las escrituras se realizan con un nivel de consistencia de `ALL`. Es necesario remarcar esto, porque es importante que las lecturas que realicemos en este proceso sean consistentes para evitar añadir a un mismo usuario más de una vez en el ranking.
-
-Solamente si el tiempo de completitud es inferior al del top 5 del ranking deberemos seguir con el proceso. 
-
-El siguiente paso es comprobar si el usuario está en la tabla para esa mazmorra. De esta forma podemos recuperar el record de dicho usuario en caso de que tenga alguno. Para consultar cual fue su mejor tiempo en dicha mazmorra, podemos utilizar la siguiente consulta:
-
-```sql
-CONSISTENCY QUORUM;
-
-SELECT time_minute AS lowest_time
-FROM player_statistics
-WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>
-LIMIT 1;
-```
-
-Para más información sobre la tabla `player_statistics`, ver la siguiente sección. Esta tabla utiliza un nivel de consistencia de `QUORUM` tanto para para las escrituras. Por tanto, utilizar `QUORUM` en esta consulta nos garantiza obtener un valor consistente. 
-
-Si se comprueba que el usuario ha batido su record personal, o que no se encontraba en el ranking, entonces actualizamos o añadimos la entrada correspondiente. Para actualizar el registro es necesario eliminar el antiguo primero:
-
-```sql
-CONSISTENCY ALL;
-
-DELETE FROM hall_of_fame
-WHERE country = <pais> 
-    AND dungeon_id = <dungeon_id> 
-    AND email = <email_del_usuario> 
-    AND lowest_time = <tiempo_anterior>;
-``` 
-
-Una vez eliminado, se añade el nuevo registro al ranking:
-
-```sql
-CONSISTENCY ALL;
-
 INSERT INTO hall_of_fame (
     country,
     dungeon_id,
@@ -263,19 +203,27 @@ VALUES (
 );
 ```
 
-Aplicando un nivel de consistencia `ALL` nos aseguramos de que no se produzca ninguna pérdida de datos. Además, el tiempo extra que supone utilizar un nivel de consistencia `ALL` y es asumible en este ranking debido a que un pequeño retardo a la hora de actualizarlo no tiene impacto en el juego, y a que el número de escrituras es presumiblemente bajo en este caso.
+Existen distintas estrategias que se pueden adoptar: 
 
-#### Justificación
+La primera de ellas sería **no comprobar si el usuario se encuentra en el top cinco**. Es decir, siempre que un usuario finaliza una mazmorra se añade el registro correspondiente a la tabla. Esto, no obstante, presentaría algunos desafíos:
 
-La clave de partición se compone únicamente de `country`. No añadimos `dungeon_id` a la clave de partición puesto que esto podría resultar en particiones demasiado pequeñas. Esto se debe a que solo añadimos un usuario a la tabla si su tiempo es uno de los cinco mejores. Además, aunque el número de usuarios por país sea desigual, el número de mazmorras, y el número de registros por mazmorra es relativamente constante, por lo que podemos esperar que la carga de trabajo esté equilibrada.
+- La lectura propuesta anteriormente cargaría una gran cantidad de datos.
+- Las particiones, al ser únicamente por país podrían ser demasiado grandes y desequilibradas. Algunos países tendrán una gran cantidad de usuarios (ej. EEUU), mientras que otros no (ej. Andorra). Esto podría desembocar en que unos pocos nodos gestionen la mayoría de las consultas (*hot spots*).
 
-De esta forma, `dungeon_id` y `lowest_time` se utilizan para ordenar los resultados dentro de cada partición por el tiempo más bajo primero. Esto es crucial ya que permite una recuperación eficiente del top 5 de tiempos más bajos directamente de la base de datos, sin necesidad de procesamiento adicional o de ordenamiento en la aplicación cliente.
+Estas desventajas, sin embargo, se podrían mitigar añadiendo ciertos cambios:
+
+- **Añadir `dungeon_id` a la clave de partición:** de esta forma, se deberían de realizar tantas consultas como mazmorras haya (o añadir `PER PARTITION LIMIT 5` y `ALLOW FILTERING` a la consulta anterior, si esto resulta más eficiente). Esto soluciona el problema de que se realicen consultas que devuelvan una gran cantidad de datos. También se dividen más las particiones, aliviendo en parte el problema del gran tamaño de las particiones.
+- **Borrado periódico:** si añadimos datos de manera indefinida, eventualmente seguiríamos teniendo los mismos problemas que los mencionados anteriormente pese a haber particionado más los datos. Es por eso que un borrado periódico de los datos que se encuentran fuera del top cinco podría ser muy beneficioso. Además, puesto que podemos utilizar una frecuencia distinta por país, de esta forma se podría mitigar significativamente el problema de los *hot spots*. No obstante, el borrado periódico no garantiza que se recupere el espacio utilizado inmediatamente. Eliminar un registro en Cassandra, se consigue añadiendo "tumbas" que indican que el dato ha sido eliminado. Es decir, escribiendo un dato más. Es tras un tiempo, definido mediante el parámetro `gc_grace_seconds`, que se "compacta" la tabla eliminando cada registro. Por defecto, este valor es de diez días, lo cuál podría resultar insuficiente para evitar los problemas anteriormente mencionados. Sin embargo, modificar este valor a un número muy bajo, podría desembocar en registros "resucitando" si alguno de los nodos se encontraba caído en el momento de eliminar y compactar los datos. Este nodo conseguiría replicar sus datos "zombie" al resto de nodos ya que estos ya no contendrían las tumbas. Esto se debe de tener en cuenta a la hora de establecer la frecuencia de borrado en cada país y el ajuste del parámetro `gc_grace_seconds`.
+
+Una desventaja que esta solución todavía presenta, sin embargo, es el alto volumen de escrituras innecesarias. Si bien Cassandra está diseñado para soportar esto de forma eficiente, otra posible solución sería **comprobar si es necesario añadir el registro a la tabla**. Esto requeriría un volumen de lecturas igual al volumen de escrituras al del diseño anterior, las cuales son más costosas en Cassandra [[ref](https://stackoverflow.com/questions/25102969/are-writes-always-faster-than-reads-in-cassandra)] (aunque aún así son rápidas, especialmente con un nivel de consistencia de uno). A cambio, se conseguiría reducir significativamente la frecuencia de los borrados periódicos y la memoria utilizada, lo que es probable que mejore el rendimiento.
+
+**En el caso de que no se permita la aparación de un usuario múltiples veces en el mismo ranking**, se podría conseguir añadiendo este filtro en el lado de la aplicación, o actualizando la lógica de escrituras para además comprobar si el usuario se encuentra en el ranking. Esto requeriría lecturas consistentes, las cuales se pueden implementar con un nivel de consistenca `QUORUM` tanto en escrituras como en lecturas de comprobación, o mediante consistencia de `ONE` en lectura y `ALL` en escritura (puesto que habría muchas más lecturas de comprobación que escrituras). Cuál de estas dos opciones es preferible, dependerá de las características de la aplicación: frecuencia de escrituras, frecuencia de caídas de algunos de los nodos, y el tiempo de duración de estas caídas. En concreto, la operaciones de escritura, al ser poco frecuentes en relación a las lecturas de comprobación, se beneficiarían de utilizar un nivel de consistencia de `ALL`, a cambio de poder utilizar un nivel de consistencia de uno en estas últimas. Sin embargo, el principal problema de usar este nivel de consistencia es que la operación no se puede llevar acabo si cualquier nodo de la red se encuentra caído. Si esto es un verdadero problema o no, dependerá de como de probable sea que al menos un nodo esté caído en un determinado momento.
+
+#### Otras justificaciones:
 
 La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. En caso contrario, sería imposible que en el ranking hubiera filas con un mismo `lowest_time`.
 
 Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `lowest_time`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
-
-Algo a destacar, sin embargo, es que la lógica de escrituras debe de llevarse a cabo minuciosamente. La aplicación debe evitar la adición de más de una entrada para un mismo usuario. En caso contrario, es posible que un mismo usuario aparezca múltiples veces en un mismo ranking. A continuación, se muestra la lógica que podría seguir la aplicación a la hora de realizar escrituras en esta tabla para solucionar este problema:
 
 ### Estadísticas de usuario
 
