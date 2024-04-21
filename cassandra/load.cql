@@ -18,8 +18,11 @@ CREATE TABLE hall_of_fame (
     username VARCHAR,
     lowest_time SMALLINT,
     date TIMESTAMP,
-    PRIMARY KEY (country, dungeon_id, lowest_time, email)
-) WITH CLUSTERING ORDER BY (dungeon_id ASC, lowest_time ASC);
+    -- Dependiendo de la estrategia de escritura, la clave primaria 
+    -- podría utilizar también `dungeon_id` como clave de partición.
+    PRIMARY KEY (country, dungeon_id, lowest_time, email)  
+) WITH CLUSTERING ORDER BY (dungeon_id ASC, lowest_time ASC)
+AND gc_grace_seconds = 86400;  -- Probablemente requiera una modificación
 
 
 COPY hall_of_fame (
