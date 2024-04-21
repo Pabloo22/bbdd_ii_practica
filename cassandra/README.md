@@ -183,7 +183,7 @@ WHERE country = <pais_deseado>
 Las escrituras, asumiendo que pueden existir usuarios repetidos, se realizarían de la siguiente forma:
 
 ```sql
-CONSISTENCY ONE;
+CONSISTENCY LOCAL_QUORUM;
 
 INSERT INTO hall_of_fame (
     country,
@@ -203,6 +203,9 @@ VALUES (
     toTimestamp(now())
 );
 ```
+
+> [!NOTE]
+> Se utiliza como nivel de consistencia `LOCAL_QUORUM` pese a que no se requiere de una lectura consistente para evitar una posible pérdida de datos. Esto podría ocurrir si el nodo en el cuál se están escribiendo los datos se cae antes de que escriba el registro [[ref](https://betterprogramming.pub/cassandra-consistency-guaranties-c8338e051879)]. Este tiempo adicional, creemos que es asumible puesto que un pequeño retardo a la hora de actualizar o mostrar estos leaderboards no tiene impacto en el juego.
 
 Existen distintas estrategias que se pueden adoptar: 
 
@@ -261,11 +264,13 @@ Otra opción es utilizar un nivel de consistencia de `QUORUM` tanto para las lec
 En cuanto a las escrituras, cada vez que un usuario completa una mazmorra se ejecuta el siguiente *insert*:
 
 ```sql
-CONSISTENCY ONE;
+CONSISTENCY LOCAL_QUORUM;
 
 INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
 VALUES (<dungeon_id>, <email_usuario>, <tiempo>, toTimestamp(now()));
 ```
+
+Se utiliza como nivel de consistencia `LOCAL_QUORUM` por los mismos motivos expresados en la tabla anterior.
 
 #### Otras justificaciones
 
