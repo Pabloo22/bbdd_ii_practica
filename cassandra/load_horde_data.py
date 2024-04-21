@@ -1,17 +1,43 @@
-from cassandra.cluster import Cluster
+import os
 import csv
+
+from cassandra.cluster import Cluster
 
 
 def main():
     cluster = Cluster(["localhost"], port=9042)
-    session = cluster.connect("dungeon")
 
-    insert_stmt = session.prepare(
+    # Create keyspace and table
+    session = cluster.connect()
+    session.execute(
         """
-        INSERT INTO hordas (country, event_id, email, username)
-        VALUES (?, ?, ?, ?)
+        CREATE KEYSPACE IF NOT EXISTS dungeon
+        WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 2}
     """
     )
+
+    session.set_keyspace("dungeon")
+
+    # Create table if not exists
+    # session.execute(
+    #     """
+    #     CREATE TABLE hordas(
+    #         country VARCHAR,
+    #         event_id INT,
+    #         username VARCHAR,
+    #         email VARCHAR,
+    #         n_kills COUNTER,
+    #         PRIMARY KEY ((country, event_id), email, username)
+    #     );
+    # """
+    # )
+
+    # insert_stmt = session.prepare(
+    #     """
+    #     INSERT INTO hordas (country, event_id, email, username)
+    #     VALUES (?, ?, ?, ?)
+    # """
+    # )
 
     update_counter_stmt = session.prepare(
         """
@@ -20,7 +46,10 @@ def main():
     """
     )
 
-    with open("/csv/Hordas.csv", "r") as csvfile:
+    current_file_path = os.path.dirname(os.path.abspath(__file__))
+    csv_file_path = os.path.join(current_file_path, "export/Hordas.csv")
+
+    with open(csv_file_path, "r", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             country, event_id, username, email, n_kills = row
@@ -28,7 +57,7 @@ def main():
             n_kills = int(n_kills)
 
             # Insert data except the counter
-            session.execute(insert_stmt, (country, event_id, email, username))
+            # session.execute(insert_stmt, (country, event_id, email, username))
 
             # Update the counter
             session.execute(
