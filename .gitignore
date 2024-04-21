@@ -11,8 +11,8 @@ leaderboards/tmp/cassandra4/*
 !leaderboards/tmp/cassandra3/.gitkeep
 !leaderboards/tmp/cassandra4/.gitkeep
 
-neo4j/data/*
-!neo4j/data/.gitkeep
+editor_niveles/data/*
+!editor_niveles/data/.gitkeep
 
 
 # Byte-compiled / optimized / DLL files
