@@ -19,7 +19,7 @@ INSERT INTO hall_of_fame (
     dungeon_id,
     dungeon_name,
     email, username,
-    lowest_time,
+    time_in_minutes,
     date
 )
 VALUES (
@@ -34,7 +34,7 @@ VALUES (
 
 -- Para saber si debemos actualizar el Hall of Fame, se comprueba si 
 -- el tiempo mejora el peor de los 5 tiempos.
-SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
+SELECT dungeon_id, dungeon_name, email, username, time_in_minutes, date
 FROM hall_of_fame
 WHERE country = 'de_DE' and dungeon_id = 0;  
 -- (valores puestos a modo de ejemplo)
@@ -68,10 +68,6 @@ WHERE country = 'fr_FR' AND event_id = 16;
 
 -- WRITE
 CONSISTENCY ONE;
-
-INSERT INTO kills_hordas (country, event_id, username, kills_counter)
-VALUES (<pais>, <id_evento>, <nombre_usuario>, <número_de_muertes>);
--- USING TTL 86400;
 
 UPDATE hordas
 SET n_kills = n_kills + 1
