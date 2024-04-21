@@ -37,7 +37,7 @@ Una vez hecho esto, para desplegar los contenedores de Neo4j y Jupyter, se debe 
 docker compose up
 ```
 > [!NOTE]
-> Si se quiere desplegar en Windows, se debe usar el archivo `docker-compose.windows.yml` en lugar de `docker-compose.yml` con el siguiente comando:
+> Si se quiere desplegar en Windows, se debe usar el archivo `docker-compose-windows.yml` en lugar de `docker-compose.yml` con el siguiente comando:
 > ```bash
 > docker compose -f docker-compose-windows.yml up
 > ```
@@ -47,6 +47,9 @@ Una vez desplegado, se puede acceder a la interfaz web de Neo4j en [http://local
 > Por defecto, el puerto de Jupyter es el 8899, pero se puede cambiar en el archivo .env
 
 # Solución propuesta
+
+Puesto que algunas consultas crean propiedades de las que luego se aprovechan otras posteriormente, es posible que alguna no funcione si no se han ejecutado las consultas de las que esta depende. Es por este motivo, que se recomienda ejecutarlas en el orden mostrado a continuación.
+
 ## Desde la interfaz web
 ### 1. Buscar todas las salas de todas las mazmorras que contengan un tesoro en particular.
 ```cypher
