@@ -1,23 +1,26 @@
 from cassandra.cluster import Cluster
-from cassandra.query import BatchStatement, SimpleStatement
 import csv
 
-def main():
-    cluster = Cluster(['localhost'], port=9042)
-    session = cluster.connect('dungeon')
 
-    insert_stmt = session.prepare("""
+def main():
+    cluster = Cluster(["localhost"], port=9042)
+    session = cluster.connect("dungeon")
+
+    insert_stmt = session.prepare(
+        """
         INSERT INTO hordas (country, event_id, email, username)
         VALUES (?, ?, ?, ?)
-    """)
+    """
+    )
 
-    update_counter_stmt = session.prepare("""
+    update_counter_stmt = session.prepare(
+        """
         UPDATE hordas SET n_kills = n_kills + ?
         WHERE country = ? AND event_id = ? AND email = ? AND username = ?
-    """)
+    """
+    )
 
-    # Update the CSV file path to match the volume mapping in Docker Compose
-    with open('/csv/Hordas.csv', 'r') as csvfile:  
+    with open("/csv/Hordas.csv", "r") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             country, event_id, username, email, n_kills = row
@@ -28,10 +31,13 @@ def main():
             session.execute(insert_stmt, (country, event_id, email, username))
 
             # Update the counter
-            session.execute(update_counter_stmt, (n_kills, country, event_id, email, username))
+            session.execute(
+                update_counter_stmt, (n_kills, country, event_id, email, username)
+            )
 
     print("Data import completed successfully.")
     cluster.shutdown()
+
 
 if __name__ == "__main__":
     main()

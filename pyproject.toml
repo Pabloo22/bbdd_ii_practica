@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "cassandra"
+name = "src"
 version = "0.1.0"
 description = ""
 authors = ["Pabloo22 <pablete.arino@gmail.com>"]
