@@ -16,12 +16,12 @@ CREATE TABLE hall_of_fame (
     dungeon_name VARCHAR,
     email VARCHAR,
     username VARCHAR,
-    lowest_time SMALLINT,
+    time_in_minutes SMALLINT,
     date TIMESTAMP,
     -- Dependiendo de la estrategia de escritura, la clave primaria 
     -- podría utilizar también `dungeon_id` como clave de partición.
-    PRIMARY KEY (country, dungeon_id, lowest_time, email)  
-) WITH CLUSTERING ORDER BY (dungeon_id ASC, lowest_time ASC);
+    PRIMARY KEY (country, dungeon_id, time_in_minutes, email)  
+) WITH CLUSTERING ORDER BY (dungeon_id ASC, time_in_minutes ASC);
 -- si se usan borrados periódicos se podría ajustar este parámetro:
 -- AND gc_grace_seconds = ?;
 
@@ -30,7 +30,7 @@ COPY hall_of_fame (
     email,
     country,
     dungeon_id,
-    lowest_time,
+    time_in_minutes,
     date,
     dungeon_name,
     username

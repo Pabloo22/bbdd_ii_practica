@@ -153,12 +153,12 @@ CREATE TABLE hall_of_fame (
     dungeon_name VARCHAR,
     email VARCHAR,
     username VARCHAR,
-    lowest_time SMALLINT,
+    time_in_minutes SMALLINT,
     date TIMESTAMP,
     -- Dependiendo de la estrategia de escritura, la clave primaria 
     -- podría utilizar también `dungeon_id` como clave de partición.
-    PRIMARY KEY (country, dungeon_id, lowest_time, email)  
-) WITH CLUSTERING ORDER BY (dungeon_id ASC, lowest_time ASC);
+    PRIMARY KEY (country, dungeon_id, time_in_minutes, email)  
+) WITH CLUSTERING ORDER BY (dungeon_id ASC, time_in_minutes ASC);
 -- si se usan borrados periódicos se podría ajustar este parámetro:
 -- AND gc_grace_seconds = ?;
 ```
@@ -170,7 +170,7 @@ Con este diseño, todos los datos necesarios para la consulta anterior se pueden
 ```sql
 CONSISTENCY ONE;
 
-SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
+SELECT dungeon_id, dungeon_name, email, username, time_in_minutes, date
 FROM hall_of_fame
 WHERE country = <pais_deseado>
 ```
@@ -190,7 +190,7 @@ INSERT INTO hall_of_fame (
     dungeon_id,
     dungeon_name,
     email, username,
-    lowest_time,
+    time_in_minutes,
     date
 )
 VALUES (
@@ -225,9 +225,9 @@ Una desventaja que esta solución todavía presenta, sin embargo, es el alto vol
 
 #### Otras justificaciones:
 
-La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. En caso contrario, sería imposible que en el ranking hubiera filas con un mismo `lowest_time`.
+La adición de `email` a la clave de clustering nos permite poder identificar cada entrada de manera unica. En caso contrario, sería imposible que en el ranking hubiera filas con un mismo `time_in_minutes`.
 
-Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `lowest_time`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
+Con respecto a los tipos de datos utilizados en cada columna, las variables de tipo texto se han definido como `VARCHAR`, ya que no que se requiera de más espacio en memoria para estas. Por otro lado, pensamos en utilizar `TINYINT` para `time_in_minutes`. Si bien estimamos que se tardará menos de 127 min en completar en una mazmorra, ya que, tras un estudio de los datos, ninguno de los jugadores a nivel global ha tardado más de 49 minutos. En el futuro es posible que se diseñen mazmorras con una duración muy larga, y, por tanto, creemos que es más conservador utilizar el tipo `SMALLINT`, el cual nos permite almacenar enteros hasta 32767. De la misma forma, es posible que en un futuro se amplie el número de mazzmorras a más de las 19 mazmorras actuales, superando las 127, por lo que usaremos de nuevo `SMALLINT` para la columna `dungeon_id`.
 
 ### Estadísticas de usuario
 
@@ -316,24 +316,6 @@ Nótese que el `LIMIT N` y el `ORDER BY n_kills` debe realizarse desde el lado d
 
 #### Escrituras
 
-Para insertar datos en esta tabla, hemos utilizado el script [load_horde_data.py](load_horde_data.py). Este fichero primero carga los usuarios que han participado en cada horda con el número de *kills*  a cero.
-
-```sql
-INSERT INTO hordas (country, event_id, email, username)
-VALUES (?, ?, ?, ?)
-```
-
-Después, se actualiza este valor:
-
-```sql
-UPDATE hordas SET n_kills = n_kills + ?
-WHERE country = ? AND event_id = ? AND email = ? AND username = ?
-```
-
-Hemos utilizado un nivel de consistencia de `ONE` tal y como se recomienda en la [documentación](https://docs.datastax.com/en/archived/cql/3.0/cql/ddl/ddl_counters_c.html) de Cassandra cuando se utilizan contadores. Cassandra garantiza que los contadores se incrementen de manera consistente incluso si se producen escrituras concurrentes.
-
-Una observación es que se podría utilizar `TTL` para que los registros se eliminen automáticamente después de la finalización del evento, tras 40 o 50 min, por ejemplo. No obstante, si se quiere mantener un registro de hordas pasada esto lo impediría.
-
 Para actualizar los datos de este ranking durante el evento, se puede utilizar el siguiente *update*, cada vez que un usuario mata a un monstruo:
 
 ```sql
@@ -345,6 +327,10 @@ WHERE country = <pais>
     AND event_id = <id_evento> 
     AND email = <email_usuario>;
 ```
+
+Hemos utilizado un nivel de consistencia de `ONE` tal y como se recomienda en la [documentación](https://docs.datastax.com/en/archived/cql/3.0/cql/ddl/ddl_counters_c.html) de Cassandra cuando se utilizan contadores. Cassandra garantiza que los contadores se incrementen de manera consistente incluso si se producen escrituras concurrentes.
+
+Una observación es que se podría utilizar `TTL` para que los registros se eliminen automáticamente después de la finalización del evento, tras 40 o 50 min, por ejemplo. No obstante, si se quiere mantener un registro de hordas pasada esto lo impediría.
 
 #### Justificaciones adicionales
 
@@ -496,7 +482,10 @@ Las consultas de escritura y lectura necesarias se encuentran en el fichero `rea
 
 ## Pre-requisitos
 
-Es necesario tener instalado Docker y Docker Compose en el sistema. Para instalar Docker, siga las instrucciones en la [documentación oficial](https://docs.docker.com/get-docker/). Para instalar Docker Compose, siga las instrucciones en la [documentación oficial](https://docs.docker.com/compose/install/).
+Es necesario tener instalado Docker y Docker Compose en el sistema. 
+
+- Para instalar Docker: https://docs.docker.com/get-docker/
+- Para instalar Docker Compose: https://docs.docker.com/compose/install/
 
 Para desplegar y ejecutar la solución, se deben seguir los siguientes pasos:
 
@@ -591,3 +580,23 @@ docker exec -it cassandra1 cqlsh --request-timeout=10000
 ### 3.2. Crear el keyspace y las tablas
 
 Ejecutar el contenido del fichero `load.cql` en `cqlsh` para crear el keyspace y las tablas necesarias en Cassandra.
+
+Aunque no es necesario, también hemos creado un script, [load_horde_data.py](load_horde_data.py), para cargar los datos de hordas desde Python. Lo creamos pensando que no se podían cargar datos a esa columna directamente al usar el tipo `COUNTER`. No obstante, esto ha resultado ser falso. Hemos decidido dejar el archivo para ilustrar como se podrían hacer consultas a la base de datos desde Python.
+
+La única dependencia de este archivo es `cassandra-driver`. Se puede instalar manualmente utilizando
+
+```
+pip install cassandra-driver
+```
+
+o se puede utilizar el entorno virtual creado mediante [Poetry](https://python-poetry.org/). Para ello, es necesario instalarlo si no se ha hecho ya:
+
+```
+pip install poetry
+```
+
+Después se debe crear el entorno virtual e instalar las librerías mediante:
+
+```
+poetry install
+```

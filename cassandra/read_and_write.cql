@@ -23,12 +23,12 @@ INSERT INTO hall_of_fame (
     date
 )
 VALUES (
-    <pais>,
-    <dungeon_id>,
-    <nombre_dungeon>,
-    <email_usuario>,
-    <nombre_usuario>,
-    <nuevo_tiempo>,
+    'de_DE',
+    0,
+    'Burghap, Prison of the Jealous Hippies',
+    'thea58@example.net',
+    'naseraziz',
+    1,
     toTimestamp(now())
 );
 
@@ -47,13 +47,13 @@ CONSISTENCY ONE;
 
 SELECT time_minute, date
 FROM player_statistics
-WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>;
+WHERE email = 'aaubry@example.net' AND dungeon_id = 0;
 
 -- WRITE
 CONSISTENCY LOCAL_QUORUM;
 
 INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
-VALUES (<dungeon_id>, <email_usuario>, <tiempo>, toTimestamp(now()));
+VALUES (0, 'aaubry@example.net', 22, toTimestamp(now()));
 
 
 -- HORDE LEADERBOARD
@@ -64,7 +64,7 @@ CONSISTENCY ONE;
 
 SELECT username, email, n_kills
 FROM hordas
-WHERE country = <pais> AND event_id = <id_evento>;
+WHERE country = 'fr_FR' AND event_id = 16;
 
 -- WRITE
 CONSISTENCY ONE;
@@ -75,6 +75,11 @@ VALUES (<pais>, <id_evento>, <nombre_usuario>, <número_de_muertes>);
 
 UPDATE hordas
 SET n_kills = n_kills + 1
-WHERE country = <pais> 
-    AND event_id = <id_evento> 
-    AND email = <email_usuario>;
+WHERE country = 'fr_FR' 
+    AND event_id = 16 
+    AND email = 'aaubry@example.net' 
+    AND username = 'catherine30';
+
+-- Nota:
+-- Todos los valores han sido elegidos a modo de ejemplo para facilitar la
+-- comprobación de la funcionalidad de las consultas.
