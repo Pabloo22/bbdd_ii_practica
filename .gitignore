@@ -1,15 +1,15 @@
-cassandra/dumpVideogameMaster.sql
-cassandra/data/*
-!cassandra/data/.gitkeep
-cassandra/export/*.csv
-cassandra/tmp/cassandra1/*
-cassandra/tmp/cassandra2/*
-cassandra/tmp/cassandra3/*
-cassandra/tmp/cassandra4/*
-!cassandra/tmp/cassandra1/.gitkeep
-!cassandra/tmp/cassandra2/.gitkeep
-!cassandra/tmp/cassandra3/.gitkeep
-!cassandra/tmp/cassandra4/.gitkeep
+leaderboards/dumpVideogameMaster.sql
+leaderboards/data/*
+!leaderboards/data/.gitkeep
+leaderboards/export/*.csv
+leaderboards/tmp/cassandra1/*
+leaderboards/tmp/cassandra2/*
+leaderboards/tmp/cassandra3/*
+leaderboards/tmp/cassandra4/*
+!leaderboards/tmp/cassandra1/.gitkeep
+!leaderboards/tmp/cassandra2/.gitkeep
+!leaderboards/tmp/cassandra3/.gitkeep
+!leaderboards/tmp/cassandra4/.gitkeep
 
 neo4j/data/*
 !neo4j/data/.gitkeep
