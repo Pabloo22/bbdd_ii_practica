@@ -64,10 +64,7 @@ CONSISTENCY ONE;
 
 SELECT username, email, n_kills
 FROM hordas
-WHERE country = <pais> AND event_id = <id_evento>
-GROUP BY email
-ORDER BY n_kills DESC
-LIMIT <N>;
+WHERE country = <pais> AND event_id = <id_evento>;
 
 -- WRITE
 CONSISTENCY ONE;

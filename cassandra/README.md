@@ -307,10 +307,12 @@ CONSISTENCY ONE;
 SELECT username, email, n_kills
 FROM hordas
 WHERE country = <pais> AND event_id = <id_evento>
-GROUP BY email
 ```
 
 En este caso, utilizamos un nivel de consistencia de uno, ya que la consistencia en este leaderboard no es tan importante y, en cambio, el rendimiento es crítico.
+
+Nótese que el `LIMIT N` y el `ORDER BY n_kills` debe realizarse desde el lado del cliente. Esto se debe a que Cassandra no soporta operaciones de ordenación en campos que no estén incluidos en la clave de clustering. No obstante, incluir esta columna a la clave de clustering no solo requeriría realizar lecturas consistentes para eliminar el registro antiguo antes de añadir el siguiente, sino que además podría resultar en la pérdida de datos al poderse producir condiciones de carrera si un usuario mata a más de un monstruo a la vez. Por otro lado, al utilizar el tipo de dato `COUNTER`, también evitamos tener que realizar agregaciones (más costosas [[ref](https://dba.stackexchange.com/questions/314567/why-is-count-bad-in-cassandra)]) de tipo `COUNT` .
+
 
 #### Escrituras
 
@@ -351,8 +353,6 @@ La clave de partición se compone de `country` y `event_id`. Dividir únicamente
 Con respecto a la clave de clustering, es necesario utilizar `email` para poder identificar a cada usuario de manera única. No obstante, también añadimos `username` ya que, al utilizar el tipo de datos `COUNTER`, todas las columnas fuera de la clave primaria deben de utilizar este tipo de datos.
 
 No añadimos `n_kills` a la clave de clustering puesto que es un campo que será actualizado y no deseamos tener más de un registo por usuario.
-
-En cuanto a los tipos de datos utilizados, cabe destacar el uso de `COUNTER` para `n_kills`. Este tipo de datos es el más adecuado para este ranking ya que se trata de un contador que se incrementa cada vez que un usuario mata a un monstruo. De esta forma, evitamos tener que eliminar un registro y añadirlo de nuevo cada vez que un usuario mata a un monstruo (y utilizando lecturas consistentes), o tener que realizar agregaciones de tipo `COUNT` que podrían resultar en latencias innecesarias y que requerirían de un mayor número de escrituras y almacenamiento.
 
 Para el resto de campos, simplemente hemos utilizado `VARCHAR` para las variables de tipo texto e `INT` para `event_id`. Este último tipo de datos es el que mejor se ajusta a las necesidades de este ranking ya que es posible que haya un gran número de eventos en el futuro.
 
