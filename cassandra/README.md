@@ -302,8 +302,6 @@ SELECT username, email, n_kills
 FROM hordas
 WHERE country = <pais> AND event_id = <id_evento>
 GROUP BY email
-ORDER BY n_kills DESC
-LIMIT <N>;
 ```
 
 En este caso, utilizamos un nivel de consistencia de uno, ya que la consistencia en este leaderboard no es tan importante y, en cambio, el rendimiento es crítico.
@@ -326,7 +324,7 @@ WHERE country = ? AND event_id = ? AND email = ? AND username = ?
 
 Hemos utilizado un nivel de consistencia de `ONE` tal y como se recomienda en la [documentación](https://docs.datastax.com/en/archived/cql/3.0/cql/ddl/ddl_counters_c.html) de Cassandra cuando se utilizan contadores. Cassandra garantiza que los contadores se incrementen de manera consistente incluso si se producen escrituras concurrentes.
 
-Una observación es que se podría utilizar `TTL` para que los registros se eliminen automáticamente después de 24 horas. Esto es útil para evitar que la tabla crezca indefinidamente, en caso de que no sea necesario acceder a estos datos una vez ha terminado el evento.
+Una observación es que se podría utilizar `TTL` para que los registros se eliminen automáticamente después de la finalización del evento, tras 40 o 50 min, por ejemplo. No obstante, si se quiere mantener un registro de hordas pasada esto lo impediría.
 
 Para actualizar los datos de este ranking durante el evento, se puede utilizar el siguiente *update*, cada vez que un usuario mata a un monstruo:
 
@@ -392,6 +390,21 @@ Esta consulta comienza seleccionando campos relevantes de las tablas `WebUser` y
 
 Cabe destacar la utilización de la función de ventana `ROW_NUMBER()` para asignar un rango a cada registro dentro de cada país y mazmorra, basado en el tiempo de finalización más rápido y con un desempate por fecha en caso de tiempos idénticos. Finalmente, selecciona los cinco mejores registros de cada grupo para guardarlos en un archivo CSV, especificando los delimitadores de campos y líneas. El archivo resultante se guarda en la ruta especificada `/var/lib/mysql-files/HallofFame.csv`, con los campos encerrados en comillas.
 
+Para cargar los datos a Cassandra se utiliza:
+
+```sql
+COPY hall_of_fame (
+    email,
+    country,
+    dungeon_id,
+    lowest_time,
+    date,
+    dungeon_name,
+    username
+)
+FROM '/csv/HallofFame.csv' WITH HEADER = false;
+```
+
 ### Estadísticas de usuario
 
 Esta vez, migramos solamente el email, el ID de la mazmorra, el tiempo que ha tardado en completarlo y la fecha de completitud.
@@ -402,6 +415,13 @@ FROM CompletedDungeons
 ORDER BY email, idD, time_minute ASC
 INTO OUTFILE '/var/lib/mysql-files/Statistics.csv'
 FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+```
+
+Para cargar los datos a Cassandra se utiliza:
+
+```sql
+COPY player_statistics (email, dungeon_id, time_minute, date) 
+FROM '/csv/Statistics.csv' WITH HEADER = false;
 ```
 
 ### Hordas
@@ -417,6 +437,13 @@ GROUP BY Kills.idE, w.country, w.userName, w.email
 ORDER BY w.country ASC, Kills.idE ASC, n_kills DESC, w.userName ASC
 INTO OUTFILE '/var/lib/mysql-files/Hordas.csv'
 FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+```
+
+Para cargar los datos a Cassandra se utiliza:
+
+```sql
+COPY hordas (country, event_id, username, email, n_kills) 
+FROM '/csv/Hordas.csv' WITH HEADER = false;
 ```
 
 ## Tarea 3: creación del cluster
