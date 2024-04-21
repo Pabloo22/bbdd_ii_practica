@@ -71,10 +71,7 @@ CONSISTENCY ONE;
 
 UPDATE hordas
 SET n_kills = n_kills + 1
-WHERE country = 'fr_FR' 
-    AND event_id = 16 
-    AND email = 'aaubry@example.net' 
-    AND username = 'catherine30';
+WHERE country = 'fr_FR' AND event_id = 16 AND email = 'aaubry@example.net' AND username = 'catherine30';
 
 -- Nota:
 -- Todos los valores han sido elegidos a modo de ejemplo para facilitar la
