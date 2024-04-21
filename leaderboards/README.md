@@ -545,7 +545,16 @@ UN  192.168.64.4  319.11 KiB  128     52.0%             04ac025d-5c43-4d57-9468-
 
 ### 2.1. Conectarse a la base de datos MySQL
 
-Para ello, podemos utilizar MySQL Workbench o cualquier otro cliente de MySQL como SQLTools para acceder desde Visual Studio Code. Para este último caso, se ha proporcionado la configuración necesaria dentro del fichero `.vscode/settings.json`. La conexión se realiza con los siguientes datos:
+Se recomienda acceder desde el propio contenedor `mysql`:
+
+```bash
+docker exec -it mysql bash
+mysql -u root -p
+```
+
+La contraseña es `root`.
+
+También podemos utilizar MySQL Workbench o cualquier otro cliente de MySQL como SQLTools para acceder desde Visual Studio Code. Para este último caso, se ha proporcionado la configuración necesaria dentro del fichero `.vscode/settings.json`. La conexión se realiza con los siguientes datos:
 
 - Server: `localhost`
 - Port: `3309`
@@ -556,6 +565,11 @@ Para ello, podemos utilizar MySQL Workbench o cualquier otro cliente de MySQL co
 ### 2.2. Realizar el dump de los datos
 
 Para ello, simplemente se debe de ejecutar el fichero `dumpVideogameMaster.sql` en el cliente de MySQL. Este fichero crea la base de datos SQL y las tablas necesarias para el juego así como inserta los datos necesarios para poder realizar las consultas de exportación a CSV.
+
+```sql
+USE dungeon;
+SOURCE /var/lib/mysql-files/dumpVideogameMaster.sql;
+```
 
 ### 2.3. Exportar los datos a CSV
 
