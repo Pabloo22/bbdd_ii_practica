@@ -13,7 +13,8 @@ leaderboards/tmp/cassandra4/*
 
 editor_niveles/data/*
 !editor_niveles/data/.gitkeep
-
+editor_niveles/plugins/*
+!editor_niveles/plugins/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
