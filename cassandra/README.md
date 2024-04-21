@@ -190,7 +190,7 @@ INSERT INTO hall_of_fame (
     dungeon_name,
     email, username,
     lowest_time,
-    date,
+    date
 )
 VALUES (
     <pais>,
@@ -199,7 +199,7 @@ VALUES (
     <email_usuario>,
     <nombre_usuario>,
     <nuevo_tiempo>,
-    now(),
+    toTimestamp(now())
 );
 ```
 
@@ -263,7 +263,7 @@ En cuanto a las escrituras, cada vez que un usuario completa una mazmorra se eje
 CONSISTENCY ONE;
 
 INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
-VALUES (<dungeon_id>, <email_usuario>, <tiempo>, now());
+VALUES (<dungeon_id>, <email_usuario>, <tiempo>, toTimestamp(now()));
 ```
 
 #### Otras justificaciones
