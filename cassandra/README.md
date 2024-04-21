@@ -158,7 +158,7 @@ CREATE TABLE hall_of_fame (
     -- Dependiendo de la estrategia de escritura, la clave primaria 
     -- podría utilizar también `dungeon_id` como clave de partición.
     PRIMARY KEY (country, dungeon_id, lowest_time, email)  
-) WITH CLUSTERING ORDER BY (lowest_time ASC)
+) WITH CLUSTERING ORDER BY (dungeon_id ASC, lowest_time ASC)
 AND gc_grace_seconds = ?;  -- Probablemente requiera una modificación
 ```
 
