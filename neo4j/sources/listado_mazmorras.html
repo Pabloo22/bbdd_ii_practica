@@ -1,0 +1,134 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 950px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "skyblue", "id": "Old-Fashioned Mountain of Emerald city", "label": "Old-Fashioned Mountain of Emerald city", "name": "Old-Fashioned Mountain of Emerald city", "shape": "box", "size": 10, "type": "area2", "x": -0.9126794258373205, "y": -0.33791866028708134}, {"color": "salmon", "id": "Onyxholde, Dungeon of the Uptight Rogues", "label": "Onyxholde, Dungeon of the Uptight Rogues", "name": "Onyxholde, Dungeon of the Uptight Rogues", "shape": "box", "size": 10, "type": "dungeon", "x": -0.6429425837320574, "y": -0.215311004784689}, {"color": "salmon", "id": "Tethegreat, Hobble of the Worried Otaku", "label": "Tethegreat, Hobble of the Worried Otaku", "name": "Tethegreat, Hobble of the Worried Otaku", "shape": "box", "size": 10, "type": "dungeon", "x": 0.9509569377990431, "y": -0.3133971291866029}, {"color": "salmon", "id": "Windlegarth, Hobble of the Amorous Degenerates", "label": "Windlegarth, Hobble of the Amorous Degenerates", "name": "Windlegarth, Hobble of the Amorous Degenerates", "shape": "box", "size": 10, "type": "dungeon", "x": -0.5938995215311005, "y": -0.2888755980861244}, {"color": "salmon", "id": "Burgfire, Necropolis of the Old-Fashioned Werewolves", "label": "Burgfire, Necropolis of the Old-Fashioned Werewolves", "name": "Burgfire, Necropolis of the Old-Fashioned Werewolves", "shape": "box", "size": 10, "type": "dungeon", "x": -0.6184210526315789, "y": -0.26435406698564595}, {"color": "salmon", "id": "Fengate, Crypt of the Fierce Sumo Wrestlers", "label": "Fengate, Crypt of the Fierce Sumo Wrestlers", "name": "Fengate, Crypt of the Fierce Sumo Wrestlers", "shape": "box", "size": 10, "type": "dungeon", "x": -0.7165071770334928, "y": -0.1417464114832536}, {"color": "skyblue", "id": "Jolly Steppe of Emerald city", "label": "Jolly Steppe of Emerald city", "name": "Jolly Steppe of Emerald city", "shape": "box", "size": 10, "type": "area1", "x": -0.6184210526315789, "y": -0.23983253588516748}, {"color": "salmon", "id": "Fairdayl, Sepulcher of the Snobbish Emperors", "label": "Fairdayl, Sepulcher of the Snobbish Emperors", "name": "Fairdayl, Sepulcher of the Snobbish Emperors", "shape": "box", "size": 10, "type": "dungeon", "x": -0.3241626794258373, "y": 0.05442583732057414}, {"color": "salmon", "id": "Hyllesgate, Mansion of the Worried Unknowns", "label": "Hyllesgate, Mansion of the Worried Unknowns", "name": "Hyllesgate, Mansion of the Worried Unknowns", "shape": "box", "size": 10, "type": "dungeon", "x": -0.34868421052631576, "y": -0.1417464114832536}, {"color": "salmon", "id": "Wortwater, Mausoleum of the Fancy Nerds", "label": "Wortwater, Mausoleum of the Fancy Nerds", "name": "Wortwater, Mausoleum of the Fancy Nerds", "shape": "box", "size": 10, "type": "dungeon", "x": -0.3732057416267942, "y": -0.11722488038277513}, {"color": "salmon", "id": "Strathgreat, Oubliette of the Mysterious Emperors", "label": "Strathgreat, Oubliette of the Mysterious Emperors", "name": "Strathgreat, Oubliette of the Mysterious Emperors", "shape": "box", "size": 10, "type": "dungeon", "x": -0.3977272727272727, "y": -0.09270334928229666}, {"color": "skyblue", "id": "Terrible River of Gandalf", "label": "Terrible River of Gandalf", "name": "Terrible River of Gandalf", "shape": "box", "size": 10, "type": "area1", "x": 0.8528708133971292, "y": -0.19078947368421054}, {"color": "salmon", "id": "Fenglass, Sepulcher of the Terrible Emperors", "label": "Fenglass, Sepulcher of the Terrible Emperors", "name": "Fenglass, Sepulcher of the Terrible Emperors", "shape": "box", "size": 10, "type": "dungeon", "x": 0.8528708133971292, "y": -0.215311004784689}, {"color": "salmon", "id": "Feldedal, Mausoleum of the Bashful Presidents", "label": "Feldedal, Mausoleum of the Bashful Presidents", "name": "Feldedal, Mausoleum of the Bashful Presidents", "shape": "box", "size": 10, "type": "dungeon", "x": -0.34868421052631576, "y": -0.16626794258373206}, {"color": "salmon", "id": "Burgtethe, Pit of the Sticky Nerds", "label": "Burgtethe, Pit of the Sticky Nerds", "name": "Burgtethe, Pit of the Sticky Nerds", "shape": "box", "size": 10, "type": "dungeon", "x": 1.0, "y": -0.33791866028708134}, {"color": "skyblue", "id": "Uptight Shrubland of Avalon", "label": "Uptight Shrubland of Avalon", "name": "Uptight Shrubland of Avalon", "shape": "box", "size": 10, "type": "area1", "x": -0.6919856459330144, "y": -0.16626794258373206}, {"color": "salmon", "id": "Corriebent, Castle of the Bashful Emperors", "label": "Corriebent, Castle of the Bashful Emperors", "name": "Corriebent, Castle of the Bashful Emperors", "shape": "box", "size": 10, "type": "dungeon", "x": -0.6674641148325359, "y": -0.19078947368421054}, {"color": "skyblue", "id": "Panicky Desert of Fomalhaut", "label": "Panicky Desert of Fomalhaut", "name": "Panicky Desert of Fomalhaut", "shape": "box", "size": 10, "type": "area2", "x": 0.09270334928229666, "y": 0.34868421052631576}, {"color": "salmon", "id": "Bentclock, Laboratory of the Sexy Thieves", "label": "Bentclock, Laboratory of the Sexy Thieves", "name": "Bentclock, Laboratory of the Sexy Thieves", "shape": "box", "size": 10, "type": "dungeon", "x": 0.215311004784689, "y": 0.20155502392344496}, {"color": "salmon", "id": "Gatedayl, Mansion of the Terrible Sumo Wrestlers", "label": "Gatedayl, Mansion of the Terrible Sumo Wrestlers", "name": "Gatedayl, Mansion of the Terrible Sumo Wrestlers", "shape": "box", "size": 10, "type": "dungeon", "x": 0.19078947368421054, "y": 0.22607655502392343}, {"color": "salmon", "id": "Pinewort, Vault of the Agreeable Shoguns", "label": "Pinewort, Vault of the Agreeable Shoguns", "name": "Pinewort, Vault of the Agreeable Shoguns", "shape": "box", "size": 10, "type": "dungeon", "x": 0.2888755980861244, "y": 0.12799043062200954}, {"color": "skyblue", "id": "Insane Jungle of Gondor", "label": "Insane Jungle of Gondor", "name": "Insane Jungle of Gondor", "shape": "box", "size": 10, "type": "area1", "x": -0.05442583732057414, "y": 0.1770334928229665}, {"color": "salmon", "id": "Arvalecliffe, Laboratory of the Unsightly Ninjas", "label": "Arvalecliffe, Laboratory of the Unsightly Ninjas", "name": "Arvalecliffe, Laboratory of the Unsightly Ninjas", "shape": "box", "size": 10, "type": "dungeon", "x": 0.0681818181818182, "y": 0.2996411483253588}, {"color": "salmon", "id": "Strathgate, Laboratory of the Sexy Otaku", "label": "Strathgate, Laboratory of the Sexy Otaku", "name": "Strathgate, Laboratory of the Sexy Otaku", "shape": "box", "size": 10, "type": "dungeon", "x": 0.09270334928229666, "y": 0.2505980861244019}, {"color": "skyblue", "id": "Empowered Steppe of Isengard", "label": "Empowered Steppe of Isengard", "name": "Empowered Steppe of Isengard", "shape": "box", "size": 10, "type": "area2", "x": -0.22607655502392343, "y": 0.07894736842105261}, {"color": "salmon", "id": "Mossdal, Reformatory of the Amorous Otaku", "label": "Mossdal, Reformatory of the Amorous Otaku", "name": "Mossdal, Reformatory of the Amorous Otaku", "shape": "box", "size": 10, "type": "dungeon", "x": -0.07894736842105261, "y": 0.15251196172248802}, {"color": "salmon", "id": "Shadywold, Pit of the Sparkling Bandits", "label": "Shadywold, Pit of the Sparkling Bandits", "name": "Shadywold, Pit of the Sparkling Bandits", "shape": "box", "size": 10, "type": "dungeon", "x": 0.3133971291866029, "y": 0.10346889952153109}, {"color": "salmon", "id": "Hornecastel, Culverts of the Raspy Presidents", "label": "Hornecastel, Culverts of the Raspy Presidents", "name": "Hornecastel, Culverts of the Raspy Presidents", "shape": "box", "size": 10, "type": "dungeon", "x": 0.09270334928229666, "y": 0.3977272727272727}, {"color": "salmon", "id": "Gatetethe, Crypt of the Mysterious Degenerates", "label": "Gatetethe, Crypt of the Mysterious Degenerates", "name": "Gatetethe, Crypt of the Mysterious Degenerates", "shape": "box", "size": 10, "type": "dungeon", "x": 0.09270334928229666, "y": 0.3732057416267942}, {"color": "skyblue", "id": "Clumsy Tropical Rainforest of Bilbo", "label": "Clumsy Tropical Rainforest of Bilbo", "name": "Clumsy Tropical Rainforest of Bilbo", "shape": "box", "size": 10, "type": "area2", "x": -0.2996411483253588, "y": 0.029904306220095676}, {"color": "salmon", "id": "Benton, Necropolis of the Clumsy Presidents", "label": "Benton, Necropolis of the Clumsy Presidents", "name": "Benton, Necropolis of the Clumsy Presidents", "shape": "box", "size": 10, "type": "dungeon", "x": 0.09270334928229666, "y": 0.42224880382775115}, {"color": "salmon", "id": "Clockmire, Mausoleum of the Old-Fashioned Kings", "label": "Clockmire, Mausoleum of the Old-Fashioned Kings", "name": "Clockmire, Mausoleum of the Old-Fashioned Kings", "shape": "box", "size": 10, "type": "dungeon", "x": -0.2751196172248804, "y": -0.0681818181818182}, {"color": "salmon", "id": "Horneburg, Hobble of the Devilish Robots", "label": "Horneburg, Hobble of the Devilish Robots", "name": "Horneburg, Hobble of the Devilish Robots", "shape": "box", "size": 10, "type": "dungeon", "x": -0.2505980861244019, "y": -0.04366028708133973}, {"color": "salmon", "id": "Cobwold, Dungeon of the Jealous Thieves", "label": "Cobwold, Dungeon of the Jealous Thieves", "name": "Cobwold, Dungeon of the Jealous Thieves", "shape": "box", "size": 10, "type": "dungeon", "x": -0.22607655502392343, "y": 0.05442583732057414}, {"color": "skyblue", "id": "Embarrassed Swamp of Fafnir", "label": "Embarrassed Swamp of Fafnir", "name": "Embarrassed Swamp of Fafnir", "shape": "box", "size": 10, "type": "area1", "x": 0.6076555023923446, "y": -0.09270334928229666}, {"color": "salmon", "id": "Tongreat, Oubliette of the Clumsy Thieves", "label": "Tongreat, Oubliette of the Clumsy Thieves", "name": "Tongreat, Oubliette of the Clumsy Thieves", "shape": "box", "size": 10, "type": "dungeon", "x": 0.68122009569378, "y": -0.01913875598086126}, {"color": "salmon", "id": "Woldtethe, Mines of the Elderly Otaku", "label": "Woldtethe, Mines of the Elderly Otaku", "name": "Woldtethe, Mines of the Elderly Otaku", "shape": "box", "size": 10, "type": "dungeon", "x": 0.6076555023923446, "y": -0.11722488038277513}, {"color": "salmon", "id": "Schyppegarth, Cave of the Sticky Robots", "label": "Schyppegarth, Cave of the Sticky Robots", "name": "Schyppegarth, Cave of the Sticky Robots", "shape": "box", "size": 10, "type": "dungeon", "x": 0.68122009569378, "y": -0.0681818181818182}, {"color": "salmon", "id": "Firepine, Prison of the Immature Stoners", "label": "Firepine, Prison of the Immature Stoners", "name": "Firepine, Prison of the Immature Stoners", "shape": "box", "size": 10, "type": "dungeon", "x": 0.68122009569378, "y": -0.04366028708133973}, {"color": "skyblue", "id": "Terrible Moor of Babylon", "label": "Terrible Moor of Babylon", "name": "Terrible Moor of Babylon", "shape": "box", "size": 10, "type": "area1", "x": 0.09270334928229666, "y": 0.2751196172248804}, {"color": "salmon", "id": "Leechwort, Necropolis of the Immature Bandits", "label": "Leechwort, Necropolis of the Immature Bandits", "name": "Leechwort, Necropolis of the Immature Bandits", "shape": "box", "size": 10, "type": "dungeon", "x": 0.11722488038277513, "y": 0.2996411483253588}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "Old-Fashioned Mountain of Emerald city", "to": "Onyxholde, Dungeon of the Uptight Rogues", "width": 1}, {"arrows": "to", "from": "Old-Fashioned Mountain of Emerald city", "to": "Tethegreat, Hobble of the Worried Otaku", "width": 1}, {"arrows": "to", "from": "Old-Fashioned Mountain of Emerald city", "to": "Windlegarth, Hobble of the Amorous Degenerates", "width": 1}, {"arrows": "to", "from": "Old-Fashioned Mountain of Emerald city", "to": "Burgfire, Necropolis of the Old-Fashioned Werewolves", "width": 1}, {"arrows": "to", "from": "Old-Fashioned Mountain of Emerald city", "to": "Fengate, Crypt of the Fierce Sumo Wrestlers", "width": 1}, {"arrows": "to", "from": "Jolly Steppe of Emerald city", "to": "Fairdayl, Sepulcher of the Snobbish Emperors", "width": 1}, {"arrows": "to", "from": "Jolly Steppe of Emerald city", "to": "Hyllesgate, Mansion of the Worried Unknowns", "width": 1}, {"arrows": "to", "from": "Jolly Steppe of Emerald city", "to": "Wortwater, Mausoleum of the Fancy Nerds", "width": 1}, {"arrows": "to", "from": "Jolly Steppe of Emerald city", "to": "Strathgreat, Oubliette of the Mysterious Emperors", "width": 1}, {"arrows": "to", "from": "Onyxholde, Dungeon of the Uptight Rogues", "to": "Jolly Steppe of Emerald city", "width": 1}, {"arrows": "to", "from": "Tethegreat, Hobble of the Worried Otaku", "to": "Jolly Steppe of Emerald city", "width": 1}, {"arrows": "to", "from": "Terrible River of Gandalf", "to": "Fenglass, Sepulcher of the Terrible Emperors", "width": 1}, {"arrows": "to", "from": "Terrible River of Gandalf", "to": "Feldedal, Mausoleum of the Bashful Presidents", "width": 1}, {"arrows": "to", "from": "Terrible River of Gandalf", "to": "Burgtethe, Pit of the Sticky Nerds", "width": 1}, {"arrows": "to", "from": "Fenglass, Sepulcher of the Terrible Emperors", "to": "Jolly Steppe of Emerald city", "width": 1}, {"arrows": "to", "from": "Windlegarth, Hobble of the Amorous Degenerates", "to": "Jolly Steppe of Emerald city", "width": 1}, {"arrows": "to", "from": "Burgfire, Necropolis of the Old-Fashioned Werewolves", "to": "Jolly Steppe of Emerald city", "width": 1}, {"arrows": "to", "from": "Feldedal, Mausoleum of the Bashful Presidents", "to": "Jolly Steppe of Emerald city", "width": 1}, {"arrows": "to", "from": "Uptight Shrubland of Avalon", "to": "Corriebent, Castle of the Bashful Emperors", "width": 1}, {"arrows": "to", "from": "Fengate, Crypt of the Fierce Sumo Wrestlers", "to": "Uptight Shrubland of Avalon", "width": 1}, {"arrows": "to", "from": "Panicky Desert of Fomalhaut", "to": "Bentclock, Laboratory of the Sexy Thieves", "width": 1}, {"arrows": "to", "from": "Panicky Desert of Fomalhaut", "to": "Gatedayl, Mansion of the Terrible Sumo Wrestlers", "width": 1}, {"arrows": "to", "from": "Panicky Desert of Fomalhaut", "to": "Pinewort, Vault of the Agreeable Shoguns", "width": 1}, {"arrows": "to", "from": "Insane Jungle of Gondor", "to": "Arvalecliffe, Laboratory of the Unsightly Ninjas", "width": 1}, {"arrows": "to", "from": "Insane Jungle of Gondor", "to": "Strathgate, Laboratory of the Sexy Otaku", "width": 1}, {"arrows": "to", "from": "Bentclock, Laboratory of the Sexy Thieves", "to": "Insane Jungle of Gondor", "width": 1}, {"arrows": "to", "from": "Empowered Steppe of Isengard", "to": "Mossdal, Reformatory of the Amorous Otaku", "width": 1}, {"arrows": "to", "from": "Empowered Steppe of Isengard", "to": "Shadywold, Pit of the Sparkling Bandits", "width": 1}, {"arrows": "to", "from": "Empowered Steppe of Isengard", "to": "Hornecastel, Culverts of the Raspy Presidents", "width": 1}, {"arrows": "to", "from": "Empowered Steppe of Isengard", "to": "Gatetethe, Crypt of the Mysterious Degenerates", "width": 1}, {"arrows": "to", "from": "Mossdal, Reformatory of the Amorous Otaku", "to": "Insane Jungle of Gondor", "width": 1}, {"arrows": "to", "from": "Gatedayl, Mansion of the Terrible Sumo Wrestlers", "to": "Insane Jungle of Gondor", "width": 1}, {"arrows": "to", "from": "Clumsy Tropical Rainforest of Bilbo", "to": "Benton, Necropolis of the Clumsy Presidents", "width": 1}, {"arrows": "to", "from": "Clumsy Tropical Rainforest of Bilbo", "to": "Clockmire, Mausoleum of the Old-Fashioned Kings", "width": 1}, {"arrows": "to", "from": "Clumsy Tropical Rainforest of Bilbo", "to": "Horneburg, Hobble of the Devilish Robots", "width": 1}, {"arrows": "to", "from": "Clumsy Tropical Rainforest of Bilbo", "to": "Cobwold, Dungeon of the Jealous Thieves", "width": 1}, {"arrows": "to", "from": "Embarrassed Swamp of Fafnir", "to": "Tongreat, Oubliette of the Clumsy Thieves", "width": 1}, {"arrows": "to", "from": "Embarrassed Swamp of Fafnir", "to": "Woldtethe, Mines of the Elderly Otaku", "width": 1}, {"arrows": "to", "from": "Embarrassed Swamp of Fafnir", "to": "Schyppegarth, Cave of the Sticky Robots", "width": 1}, {"arrows": "to", "from": "Embarrassed Swamp of Fafnir", "to": "Firepine, Prison of the Immature Stoners", "width": 1}, {"arrows": "to", "from": "Benton, Necropolis of the Clumsy Presidents", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Shadywold, Pit of the Sparkling Bandits", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Clockmire, Mausoleum of the Old-Fashioned Kings", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Horneburg, Hobble of the Devilish Robots", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Hornecastel, Culverts of the Raspy Presidents", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Gatetethe, Crypt of the Mysterious Degenerates", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Cobwold, Dungeon of the Jealous Thieves", "to": "Embarrassed Swamp of Fafnir", "width": 1}, {"arrows": "to", "from": "Pinewort, Vault of the Agreeable Shoguns", "to": "Empowered Steppe of Isengard", "width": 1}, {"arrows": "to", "from": "Terrible Moor of Babylon", "to": "Leechwort, Necropolis of the Immature Bandits", "width": 1}, {"arrows": "to", "from": "Arvalecliffe, Laboratory of the Unsightly Ninjas", "to": "Terrible Moor of Babylon", "width": 1}, {"arrows": "to", "from": "Strathgate, Laboratory of the Sexy Otaku", "to": "Terrible Moor of Babylon", "width": 1}, {"arrows": "to", "from": "Fairdayl, Sepulcher of the Snobbish Emperors", "to": "Clumsy Tropical Rainforest of Bilbo", "width": 1}, {"arrows": "to", "from": "Hyllesgate, Mansion of the Worried Unknowns", "to": "Clumsy Tropical Rainforest of Bilbo", "width": 1}, {"arrows": "to", "from": "Wortwater, Mausoleum of the Fancy Nerds", "to": "Clumsy Tropical Rainforest of Bilbo", "width": 1}, {"arrows": "to", "from": "Strathgreat, Oubliette of the Mysterious Emperors", "to": "Clumsy Tropical Rainforest of Bilbo", "width": 1}, {"arrows": "to", "from": "Tongreat, Oubliette of the Clumsy Thieves", "to": "Terrible River of Gandalf", "width": 1}, {"arrows": "to", "from": "Woldtethe, Mines of the Elderly Otaku", "to": "Terrible River of Gandalf", "width": 1}, {"arrows": "to", "from": "Schyppegarth, Cave of the Sticky Robots", "to": "Terrible River of Gandalf", "width": 1}, {"arrows": "to", "from": "Firepine, Prison of the Immature Stoners", "to": "Terrible River of Gandalf", "width": 1}, {"arrows": "to", "from": "Leechwort, Necropolis of the Immature Bandits", "to": "Panicky Desert of Fomalhaut", "width": 1}, {"arrows": "to", "from": "Corriebent, Castle of the Bashful Emperors", "to": "Old-Fashioned Mountain of Emerald city", "width": 1}, {"arrows": "to", "from": "Burgtethe, Pit of the Sticky Nerds", "to": "Old-Fashioned Mountain of Emerald city", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"barnesHut": {"avoidOverlap": 0.4}, "minVelocity": 0.75}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<div style="position: absolute; top: 20px; right: 20px; background-color: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);">
+    <div style="background-color: skyblue; width: 20px; height: 20px; display: inline-block; margin-right: 5px;"></div>
+    <span style="color:black;">Area</span><br>
+    <div style="background-color: salmon; width: 20px; height: 20px; display: inline-block; margin-right: 5px;"></div>
+    <span style="color:black;">Dungeon</span>
+</div>
+</body>
+</html>
