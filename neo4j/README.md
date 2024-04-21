@@ -132,7 +132,32 @@ Las queries se encuentran en el siguiente [notebook](./sources/queries.ipynb)
 
 ## Visualización
 
-Las visualizaciones se encuentran en el siguiente [notebook](./sources/visualization.ipynb)
+### 1. **Mapamundi**: El mapamundi debe mostrar las distintas áreas del juego y como se interconectan unas con otras.
+<p align="center">
+  <img src="./sources/mapamundi.png" alt="Schema" width="500"/>
+</p>
+
+### 2. **Listado mazmorras**: El listado de mazmorras debe mostrar todas las mazmorras del juego y las áreas con las que están conectadas. Debería ser capaz de ver a simple vista que mazmorras están en cada área y mazmorras hacen de puente entre dos áreas.
+
+<p align="center">
+  <img src="./sources/listado_mazmorras.png" alt="Schema" width="500"/>
+</p>
+<p align="center">
+  <a href="./sources/listado_mazmorras.html">Link a la visualización interactiva</a>
+</p>
+
+### 3. **Mini-mapa mazmorra**: Dada una mazmorra el mini mapa debe mostrar información que ayude a los aventureros a explorar la mazmorra. En el mini mapa debe ser fácil reconocer las entradas y las salidas de una mazmorra. Los pasillos que llevan a salas interesantes. Las zonas donde hay monstruos o tesoros y el nivel/precio de estos
+
+<p align="center">
+  <img src="./sources/minimapa_mazmorra.png" alt="Schema" width="500"/>
+</p>
+<p align="center" href="./sources/minimapa_mazmorra.html">
+  <a href="./sources/minimapa_mazmorra.html">Link a la visualización interactiva</a>
+</p>
+
+En esta visualización, el camino marcado en rojo es el camino más corto entre la entrada y la sala con más tesoros valiosos.
+
+El código usado para generar las visualizaciones se encuentran en el siguiente [notebook](./sources/visualization.ipynb)
 
 ## Filtro colaborativo
 
