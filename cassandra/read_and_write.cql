@@ -12,31 +12,7 @@ WHERE country = 'de_DE';
 
 -- WRITE
 -------------
--- Paso 1: Usar la query anterior con consistency QUORUM para comprobar si el tiempo 
--- mejora el peor de los 5 tiempos.
--- Paso 2: Comprobar si el tiempo del usuario es el más bajo suyo.
-CONSISTENCY QUORUM;
-
-SELECT time_minute AS lowest_time
-FROM player_statistics
-WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>
-LIMIT 1;
-
--- Nota: también podríamos utilizar la tabla player_statistics.
-
--- Si es necesario actualizar el Hall of Fame continuamos.
-
--- Paso 3 (si el usuario ya estaba en el Hall of Fame):
-CONSISTENCY ALL;
-
-DELETE FROM hall_of_fame
-WHERE country = <pais> 
-    AND dungeon_id = <dungeon_id> 
-    AND email = <email_del_usuario> 
-    AND lowest_time = <tiempo_anterior>;
-
--- Paso 4:
-CONSISTENCY ALL;
+CONSISTENCY LOCAL_QUORUM;
 
 INSERT INTO hall_of_fame (
     country,
@@ -44,7 +20,7 @@ INSERT INTO hall_of_fame (
     dungeon_name,
     email, username,
     lowest_time,
-    date,
+    date
 )
 VALUES (
     <pais>,
@@ -53,24 +29,31 @@ VALUES (
     <email_usuario>,
     <nombre_usuario>,
     <nuevo_tiempo>,
-    now(),
+    toTimestamp(now())
 );
+
+-- Para saber si debemos actualizar el Hall of Fame, se comprueba si 
+-- el tiempo mejora el peor de los 5 tiempos.
+SELECT dungeon_id, dungeon_name, email, username, lowest_time, date
+FROM hall_of_fame
+WHERE country = 'de_DE' and dungeon_id = 0;  
+-- (valores puestos a modo de ejemplo)
 
 -- PLAYER STATISTICS
 ---------------------------------
 
 -- READ
-CONSISTENCY QUORUM;
+CONSISTENCY ONE;
 
 SELECT time_minute, date
 FROM player_statistics
 WHERE email = <email_usuario> AND dungeon_id = <dungeon_id>;
 
 -- WRITE
-CONSISTENCY QUORUM;
+CONSISTENCY LOCAL_QUORUM;
 
 INSERT INTO player_statistics (dungeon_id, email, time_minute, date)
-VALUES (<dungeon_id>, <email_usuario>, <tiempo>, now());
+VALUES (<dungeon_id>, <email_usuario>, <tiempo>, toTimestamp(now()));
 
 
 -- HORDE LEADERBOARD
@@ -90,8 +73,8 @@ LIMIT <N>;
 CONSISTENCY ONE;
 
 INSERT INTO kills_hordas (country, event_id, username, kills_counter)
-VALUES (<pais>, <id_evento>, <nombre_usuario>, <número_de_muertes>)
-USING TTL 86400;
+VALUES (<pais>, <id_evento>, <nombre_usuario>, <número_de_muertes>);
+-- USING TTL 86400;
 
 UPDATE hordas
 SET n_kills = n_kills + 1
