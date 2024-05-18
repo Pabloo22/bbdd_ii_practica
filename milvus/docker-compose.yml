@@ -46,7 +46,7 @@ services:
       MINIO_SECRET_KEY: minioadmin
     ports:
       - "9001:9001"
-      - "9000:9000"
+      - "9002:9000"
     volumes:
       - ./milvus_volumes/minio:/minio_data
     command: minio server /minio_data --console-address ":9001"
