@@ -1,3 +1,5 @@
+mongo/example_queries.py
+
 leaderboards/dumpVideogameMaster.sql
 leaderboards/data/*
 !leaderboards/data/.gitkeep
