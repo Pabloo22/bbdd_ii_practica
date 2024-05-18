@@ -1,5 +1,7 @@
 mongo/example_queries.py
 
+milvus/milvus_volumes/*
+
 leaderboards/dumpVideogameMaster.sql
 leaderboards/data/*
 !leaderboards/data/.gitkeep
