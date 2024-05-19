@@ -1,5 +1,7 @@
 mongo/example_queries.py
 
+milvus/jupyter_volume/.Trash-1000
+
 milvus/milvus_volumes/*
 
 leaderboards/dumpVideogameMaster.sql
