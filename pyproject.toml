@@ -10,6 +10,7 @@ python = "^3.11"
 cassandra-driver = "^3.29.1"
 pymongo = "^4.7.0"
 pymilvus = "^2.4.3"
+matplotlib = "^3.9.0"
 
 
 [build-system]
