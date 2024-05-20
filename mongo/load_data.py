@@ -10,10 +10,10 @@ client: MongoClient = MongoClient("mongodb://localhost:27017/")
 db = client["dungeons"]
 
 # Crear las colecciones
-loot_collection = db["loot"]
-monster_collection = db["monster"]
-rooms_collection = db["rooms"]
-users_collection = db["users"]
+loot_collection = db["Loot"]
+monster_collection = db["Monster"]
+rooms_collection = db["Rooms"]
+users_collection = db["Users"]
 
 
 def import_json_to_collection(file_path: str, collection_: collection.Collection):

@@ -45,10 +45,10 @@ Una vez desplegado, se puede acceder,mediante MongoDB Compass, a la base de dato
 
 Para cargar la base de datos, desde MongoDB Compass, se debe crear una nueva base de datos llamada `dungeons` y cuatro colecciones:
 
-- loot
-- monster
-- rooms
-- users
+- Loot
+- Monster
+- Rooms
+- Users
 
 Una vez creadas, se deben importar los datos de los ficheros `loot.json`, `monster.json`, `rooms.json` y `users.json` en las colecciones correspondientes. Para ello se puede utilizar MongoDB Compass o el script [`load_data.py`](load_data.py)
 
