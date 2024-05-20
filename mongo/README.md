@@ -50,7 +50,7 @@ Para cargar la base de datos, desde MongoDB Compass, se debe crear una nueva bas
 - rooms
 - users
 
-Una vez creadas, se deben importar, usando MongoDB Compass, los datos de los ficheros `loot.json`, `monster.json`, `rooms.json` y `users.json` en las colecciones correspondientes.
+Una vez creadas, se deben importar los datos de los ficheros `loot.json`, `monster.json`, `rooms.json` y `users.json` en las colecciones correspondientes. Para ello se puede utilizar MongoDB Compass o el script [`load_data.py`](load_data.py)
 
 # Tareas
 
