@@ -153,20 +153,9 @@ Realiza las siguientes consultas para el equipo de marketing
   {
     $group: {
       _id: {
-        $substr: ["$creation_date", 0, 4]
-      },
-      country: {
-        $push: "$country"
-      }
-    }
-  },
-  {
-    $unwind: "$country"
-  },
-  {
-    $group: {
-      _id: {
-        year: "$_id",
+        year: {
+          $substr: ["$creation_date", 0, 4]
+        },
         country: "$country"
       },
       count: {
@@ -190,7 +179,70 @@ Realiza las siguientes consultas para el equipo de marketing
 
 #### B. Los 20 países cuyos usuarios han realizado el mayor número de posts de tipo Lore en los últimos 5 años. Los países deben aparecen ordenados de mayor a menor número de posts.
 
-TODO
+```js
+[
+  {
+    $unwind: "$hints"
+  },
+  {
+    $match: {
+      "hints.category": "lore"
+    }
+  },
+  {
+    $group: {
+      _id: null,
+      max: {
+        $max: {
+          $toInt: {
+            $substr: ["$creation_date", 0, 4]
+          }
+        }
+      },
+      data: {
+        $push: {
+          country: "$country",
+          creation_date: {
+            $toInt: {
+              $substr: ["$creation_date", 0, 4]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    $addFields: {
+      year_5: {
+        $subtract: ["$max", 5]
+      }
+    }
+  },
+  {
+    $unwind: "$data"
+  },
+  {
+    $match: {
+      $expr: {
+        $gt: ["$data.creation_date", "$year_5"]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$data.country",
+      count: {
+        $sum: 1
+      }
+    }
+  },
+  {
+    $sort: {
+      count: -1
+    }
+  }
+]
+```
 
 #### C.  Los 5 usuarios que más bugs han reportado en 2022. Deben aparecer ordenados de mayor a menor.
 
