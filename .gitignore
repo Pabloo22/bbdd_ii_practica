@@ -1,6 +1,7 @@
 mongo/example_queries.py
 mongo/data/*
-!mongo/data/.gitkeep
+mongo/json_files/*
+!mongo/json_files/.gitkeep
 
 milvus/jupyter_volume/.Trash-1000
 
