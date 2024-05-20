@@ -139,9 +139,9 @@ Actualiza las funciones de los siguientes endpoints:
 - `GET /room/{room_id}`
 - `GET /user/{email}`
 
-##### Impacto en los Endpoints
+para que hagan uso de la nueva colección `Hints`.
 
-TODO
+La actualización de los endpoints, junto con el borrado de los campos `hints` de las colecciones `Rooms` y `Users` se encuentra en el siguiente [notebook](./queries_hints.ipynb).
 
 ### Parte II
 
@@ -149,6 +149,7 @@ Realiza las siguientes consultas para el equipo de marketing
 
 #### A. Número de cuentas de usuario que se crearon cada año agrupadas por país.
 
+Pipeline a ejecutar en la colección `Users`:
 ```js
 [
   {
@@ -180,6 +181,7 @@ Realiza las siguientes consultas para el equipo de marketing
 
 #### B. Los 20 países cuyos usuarios han realizado el mayor número de posts de tipo Lore en los últimos 5 años. Los países deben aparecen ordenados de mayor a menor número de posts.
 
+Pipeline a ejecutar en la colección `Users`:
 ```js
 [
   {
@@ -247,6 +249,7 @@ Realiza las siguientes consultas para el equipo de marketing
 
 #### C.  Los 5 usuarios que más bugs han reportado en 2022. Deben aparecer ordenados de mayor a menor.
 
+Pipeline a ejecutar en la colección `Users`:
 ```js
 [
   {
@@ -288,6 +291,7 @@ Realiza las siguientes consultas para el equipo de marketing
 
 #### D. La mazmorra que más sugerencias ha recibido desglosada en países.
 
+Pipeline a ejecutar en la colección `Rooms`:
 ```js
 [
   {
