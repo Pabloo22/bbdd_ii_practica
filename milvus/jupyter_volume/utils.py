@@ -148,8 +148,10 @@ def search_by_text(
     text: str,
     top_k: int = 5,
     search_params: dict | None = None,
+    text_embedding: np.ndarray | None = None,
 ):
-    text_embedding = embedder.embedd_texts([text])[0]
+    if text_embedding is None:
+        text_embedding = embedder.embedd_texts([text])[0]
     if search_params is None:
         search_params = {"metric_type": "L2", "params": {"nprobe": 16}}
 

@@ -29,7 +29,8 @@ RUN pip install -qU \
     einops==0.6.1 \
     pillow \
     xformers==0.0.20 \
-    bitsandbytes==0.41.0
+    bitsandbytes==0.41.0 \
+    matplotlib
 
 RUN pip3 install jupyter
 RUN pip3 install jupyterlab

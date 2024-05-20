@@ -21,6 +21,8 @@ services:
             devices:
              - driver: nvidia
                capabilities: [gpu]
+      environment:
+        - JUPYTER_TOKEN=milvus
   etcd:
     container_name: milvus-etcd
     image: quay.io/coreos/etcd:v3.5.5
@@ -45,7 +47,7 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
     ports:
-      - "9001:9001"
+      - "9003:9001"
       - "9002:9000"
     volumes:
       - ./milvus_volumes/minio:/minio_data
