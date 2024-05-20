@@ -1,4 +1,5 @@
 mongo/example_queries.py
+mongo/data/*
 
 milvus/jupyter_volume/.Trash-1000
 
