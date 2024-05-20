@@ -252,8 +252,18 @@ Realiza las siguientes consultas para el equipo de marketing
     $unwind: "$hints"
   },
   {
+    $addFields: {
+      year: {
+        $toInt: {
+          $substr: ["$creation_date", 0, 4]
+        }
+      }
+    }
+  },
+  {
     $match: {
-      "hints.category": "bug"
+      "hints.category": "bug",
+      year: 2022
     }
   },
   {
@@ -265,10 +275,12 @@ Realiza las siguientes consultas para el equipo de marketing
     }
   },
   {
-    $sort:
-      {
-        bugs_reported: -1
-      }
+    $sort: {
+      bugs_reported: -1
+    }
+  },
+  {
+    $limit: 5
   }
 ]
 ```
@@ -286,24 +298,40 @@ Realiza las siguientes consultas para el equipo de marketing
     }
   },
   {
-    $group:
+    $group: {
+      _id: {
+        country: "$hints.publish_by.country",
+        dungeon_name: "$dungeon_name"
+      },
+      count: {
+        $sum: 1
+      }
+    }
+  },
+  {
+    $sort:
       {
-        _id: {
-          country: "$hints.publish_by.country",
-          dungeon_name: "$dungeon_name"
-        },
-        count: {
-          $sum: 1
-        }
+        count: -1
       }
   },
   {
     $group: {
-      _id: "$_id",
-      max: {
-        $max: "$count"
+      _id: "$_id.country",
+      dungeon_name: {
+        $first: "$_id.dungeon_name"
+      },
+      count: {
+        $first: "$count"
       }
     }
+  },
+  {
+    $project:
+      {
+        dungeon_name: 1,
+        country: "$_id",
+        _id: 0
+      }
   }
 ]
 ```
