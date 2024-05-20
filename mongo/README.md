@@ -90,7 +90,8 @@ Realiza una consulta que obtenga los datos necesarios para la nueva colección y
 #### B: Crear y Poblar la Nueva Colección
 
 1. Crea una nueva colección llamada `Hints`.
-Pipeline:
+
+Pipeline a ejecutar en la colección `Users`:
 ```js
 [
   {
@@ -101,7 +102,7 @@ Pipeline:
       _id: null,
       data: {
         $push: {
-          Creation_date: "$creation_date",
+          Creation_date: "$hints.creation_date",
           HintText: "$hints.text",
           Category: "$hints.category",
           References_room:
