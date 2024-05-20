@@ -15,6 +15,12 @@ monster_collection = db["Monster"]
 rooms_collection = db["Rooms"]
 users_collection = db["Users"]
 
+# Borrar su contenido si ya existen
+loot_collection.delete_many({})
+monster_collection.delete_many({})
+rooms_collection.delete_many({})
+users_collection.delete_many({})
+
 
 def import_json_to_collection(file_path: str, collection_: collection.Collection):
     """Función para importar datos desde un archivo JSON a una colección"""
