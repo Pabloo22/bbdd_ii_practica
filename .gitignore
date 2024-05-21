@@ -3,9 +3,9 @@ mongo/data/*
 mongo/json_files/*
 !mongo/json_files/.gitkeep
 
-milvus/jupyter_volume/.Trash-1000
+recomendacion_avatares/jupyter_volume/.Trash-1000
 
-milvus/milvus_volumes/*
+recomendacion_avatares/milvus_volumes/*
 
 leaderboards/dumpVideogameMaster.sql
 leaderboards/data/*
