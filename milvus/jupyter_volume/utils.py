@@ -120,27 +120,6 @@ def create_index(
     client.create_index(collection_name, index_params=index_params)
 
 
-def search_by_text_from_collection(
-    loaded_collection: Collection,
-    embedder: ClipEmbeddingsGenerator,
-    text: str,
-    top_k: int = 5,
-    search_params: dict | None = None,
-):
-    text_embedding = embedder.embedd_texts([text])[0]
-    if search_params is None:
-        search_params = {"metric_type": "L2", "params": {"nprobe": 16}}
-
-    results = loaded_collection.search(
-        data=[text_embedding],
-        anns_field="embedding",
-        param=search_params,
-        limit=top_k,
-        expr=None,
-    )
-    return results
-
-
 def search_by_text(
     client: MilvusClient,
     collection_name: str,
@@ -161,26 +140,6 @@ def search_by_text(
         anns_field="embedding",
         limit=top_k,
         params=search_params,
-    )
-    return results
-
-
-def search_by_image_from_collection(
-    loaded_collection: Collection,
-    embedder: ClipEmbeddingsGenerator,
-    image_path: str,
-    top_k: int = 5,
-    search_params: dict | None = None,
-):
-    image_embedding = embedder.embedd_images([image_path])[0]
-    if search_params is None:
-        search_params = {"metric_type": "L2", "params": {"nprobe": 16}}
-
-    results = loaded_collection.search(
-        data=[image_embedding],
-        anns_field="embedding",
-        param=search_params,
-        limit=top_k,
     )
     return results
 
