@@ -1,7 +1,7 @@
-mongo/example_queries.py
-mongo/data/*
-mongo/json_files/*
-!mongo/json_files/.gitkeep
+wiki/example_queries.py
+wiki/data/*
+wiki/json_files/*
+!wiki/json_files/.gitkeep
 
 recomendacion_avatares/jupyter_volume/.Trash-1000
 
