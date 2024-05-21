@@ -182,7 +182,7 @@ Algunos ejemplos de documentos de cada colección (omitiendo el campo `_id`):
 
 Cabe destacar la presencia de elementos repetidos:
 
-- "Rooms" contiene documentos "Loot", "Monster" y "hints", las cuales a su vez referencian a un "User" mediante el campo "publish_by".
+- "Rooms" contiene documentos "Loot", "Monster" (sin el atributo "type") y "hints", las cuales a su vez referencian a un "User" mediante el campo "publish_by".
 - "Users" contiene "hints", las cuales a su vez referencian a "Rooms" mediante el campo "referemces_room" (el campo tiene una errata).
 
 La presencia de información repetida nos permite evitar hacer joins en las consultas, lo que mejora la eficiencia de las mismas. No obstante, es importante tener esto en cuenta cuando se actualicen los datos.
