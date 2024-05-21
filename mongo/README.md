@@ -52,6 +52,141 @@ Para cargar la base de datos, desde MongoDB Compass, se debe crear una nueva bas
 
 Una vez creadas, se deben importar los datos de los ficheros `loot.json`, `monster.json`, `rooms.json` y `users.json` en las colecciones correspondientes. Para ello se puede utilizar MongoDB Compass o el script [`load_data.py`](load_data.py)
 
+Algunos ejemplos de documentos de cada colección (omitiendo el campo `_id`):
+
+### Loot
+
+```json
+{
+  "id": 3,
+  "gold": 50,
+  "name": "Alchemist's Supplies",
+  "type1": "Tool",
+  "type2": "Utility",
+  "weight": "8",
+  "in_rooms": [  // puede ser null
+    {
+      "amount": 1,
+      "room_id": 441,
+      "room_name": "fierce hall ",
+      "dungeon_id": 13,
+      "dungeon_name": "Greatcliffe, Castle of the Magnificent Sumo Wrestlers"
+    }
+  ]
+}
+```
+
+### Monster
+
+```json
+{
+  "id": 26,
+  "exp": 450,
+  "name": "ghast",
+  "type": "undead",
+  "level": 4,
+  "place": "dungeon",
+  "in_rooms": [  // puede ser null
+    {
+      "amount": 1,
+      "room_id": 410,
+      "room_name": "devilish torture chamber ",
+      "dungeon_id": 11,
+      "dungeon_name": "Bentalaun, Vault of the Old-Fashioned Pirates"
+    }
+  ],
+  "man_page": 148
+}
+```
+
+### Rooms
+
+```json
+{
+  "loot": [  // contiene elementos repetidos, puede ser null
+    {
+      "id": 13,
+      "gold": 1,
+      "name": "Arrows",
+      "type1": "Ammunition",
+      "type2": "Combat, Damage",
+      "weight": "1"
+    },
+    ...
+  ],
+  "hints": [
+    {
+      "category": "suggestion",
+      "hintText": "Movie bank bag moment without member. Meeting improve father hear century money. Send apply local despite. Statement tend stand involve sport degree.\\nVery above high. Sing police add show before source. Great service issue. Weight majority today past.\\nLay interview common near. Defense decision military.\\nPaper western position air buy writer fear. Chair often traditional around guy become. Reason say sense evening point water position.",
+      "publish_by": {
+        "email": "lisastewart@example.org",
+        "country": "en_US",
+        "user_name": "curtisbryan",
+        "creation_date": "2022-06-29"
+      },
+      "creation_date": "2022-07-23 20:21:12.000000"
+    },
+    ...
+  ],
+  "room_id": 55,
+  "monsters": [  // puede ser null
+    {
+      "id": 264,
+      "exp": 1100,
+      "name": "chuul",
+      "level": 11,
+      "place": "water",
+      "man_page": 40
+    },
+    ...
+  ],
+  "room_name": "laboratory ",
+  "dungeon_id": 2,
+  "in_waypoint": "Sexy Glacier of Gandalf",
+  "dungeon_name": "Shadysparth, Hobble of the Wandering Stoners",
+  "out_waypoint": null,
+  "rooms_connected": [
+    {
+      "room_id": 65,
+      "room_name": "bathroom "
+    }
+  ]
+}
+```
+
+### Users
+
+```json
+{
+  "email": "aaoki@example.com",
+  "hints": [
+    {
+      "text": "This is a test comment",
+      "category": "lore",
+      "creation_date": "2024-05-20 16:44:30.208437",
+      "referemces_room": {
+        "room_id": 5,
+        "room_name": "snobbish catacombs of ninjas",
+        "dungeon_id": 0,
+        "dungeon_name": "Burghap, Prison of the Jealous Hippies"
+      }
+    }
+  ],
+  "country": "ja_JP",
+  "user_name": "rikamurakami",
+  "creation_date": "2021-01-06"
+}
+```
+
+### Algunas observaciones
+
+Cabe destacar la presencia de elementos repetidos:
+
+- "Rooms" contiene documentos "Loot", "Monster" y "hints", las cuales a su vez referencian a un "User" mediante el campo "publish_by".
+- "Users" contiene "hints", las cuales a su vez referencian a "Rooms" mediante el campo "referemces_room" (el campo tiene una errata).
+
+La presencia de información repetida nos permite evitar hacer joins en las consultas, lo que mejora la eficiencia de las mismas. No obstante, es importante tener esto en cuenta cuando se actualicen los datos.
+
 # Tareas
 
 ## Python
